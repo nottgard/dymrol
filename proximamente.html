@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Próximamente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #000;
+    --text: #d9dde2;
+    --muted: #8d949d;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { height: 100%; margin: 0; background: var(--bg); }
+  body { overflow: hidden; }
+
+  #bg-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* Calor: tiñe de naranja la niebla de abajo */
+  .heat {
+    position: fixed; inset: 0; pointer-events: none;
+    background: linear-gradient(to top, rgba(255,85,10,.38), rgba(255,60,0,.12) 40%, transparent 65%);
+    mix-blend-mode: screen;
+    animation: flicker 2.4s infinite;
+  }
+  
+  @keyframes flicker {
+    0%, 100% { opacity: .85; } 12% { opacity: 1; } 27% { opacity: .78; }
+    41% { opacity: .95; } 63% { opacity: .8; } 78% { opacity: 1; } 90% { opacity: .88; }
+  }
+  
+  @keyframes float{
+    0%,
+    100%{
+      transform:translateX(0) rotate(-1deg)
+    }
+    50%{
+      transform:translateX(-5px) rotate(1deg)
+    }
+  }
+
+  main {
+    position: relative; 
+    z-index: 1; 
+    height: 100%;
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1.5rem, 4vh, 2.75rem);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    animation: emerge 3.2s ease-out both;
+  }
+
+  .logo { width: clamp(120px, 55vw, 80vh); color: var(--text); transform: rotate(-1deg) }
+  .logo svg, .logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 18px rgba(255,110,30,.25))}
+  .logo {
+    animation: emerge 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+      float 5s ease-in-out 1.5s infinite;
+    transition: filter 0.3s;
+  }
+  @media only screen and (hover: none) and (pointer: coarse){
+    .logo { width: clamp(520px, 100vw, 100vh); color: var(--text); }
+  }
+
+  p {
+    margin: 0;
+    max-width: 30ch;
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    font-weight: 300;
+    font-size: clamp(1.25rem, 3.6vw, 1.75rem);
+    line-height: 1.45;
+    letter-spacing: .01em;
+    color: var(--text);
+  }
+  p span { display: block; }
+  p .soft { font-style: italic; color: var(--muted); margin-top: .35em; }
+
+  @keyframes emerge {
+    from { opacity: 0; filter: blur(8px); }
+    to   { opacity: 1; filter: blur(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    main, .heat { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="heat" aria-hidden="true"></div>
+
+  <main>
+    <div class="logo" role="img">
+     <img class="logo" src="./assets/DyMLogo_Vector/DyMLogo_OnlyLogo.svg" style="width:100%"/>
+    </div>
+
+    <p>
+      <span>Estamos forjando algo...</span>
+      <span class="soft">Todavía no podemos contaros mucho, pero os va a gustar.</span>
+    </p>
+  </main>
+
+<script>
+(function () {
+  var canvas = document.getElementById('bg-canvas');
+  var context = canvas.getContext('2d');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var width, height, pixelRatio;
+
+  // Devuelve un número aleatorio entre min y max
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  // Crea un sprite circular con degradado radial (centro brillante, bordes transparentes)
+  function createGlowSprite(rgbColor) {
+    var spriteCanvas = document.createElement('canvas');
+    spriteCanvas.width = spriteCanvas.height = 64;
+    var spriteContext = spriteCanvas.getContext('2d');
+    var gradient = spriteContext.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(' + rgbColor + ',.8)');
+    gradient.addColorStop(0.4, 'rgba(' + rgbColor + ',.5)');
+    gradient.addColorStop(1, 'rgba(' + rgbColor + ',0)');
+    spriteContext.fillStyle = gradient;
+    spriteContext.fillRect(0, 0, 128, 128);
+    return spriteCanvas;
+  }
+
+  var hotGlow = createGlowSprite('255,225,140');   // amarillo claro (base de la llama)
+  var mediumGlow = createGlowSprite('255,120,20'); // naranja (zona media)
+  var coolGlow = createGlowSprite('190,30,5');     // rojo oscuro (punta de la llama)
+
+  var flames = [];
+  var embers = [];
+
+  function resizeCanvas() {
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    var flameCount = Math.round(Math.min(0, Math.max(2, width / 12)));
+    flames = [];
+    for (var i = 0; i < flameCount; i++) flames.push(createFlame(true));
+
+    embers = [];
+    for (var j = 0; j < 40; j++) embers.push(createEmber(true));
+  }
+
+  function createFlame(isInitial) {
+    return {
+      x: Math.random() * width,
+      progress: isInitial ? Math.random() : 0,  // 0 = recién nacida, 1 = se apaga
+      speed: randomBetween(0.25, 0.6),
+      size: randomBetween(80, 190) * Math.min(1.4, Math.max(0.7, height / 800)),
+      riseDistance: randomBetween(0.18, 0.4) * height,
+      swaySpeed: randomBetween(0.6, 1.4),
+      swayPhase: randomBetween(0, 6.28)
+    };
+  }
+
+  function createEmber(isInitial) {
+    return {
+      baseX: randomBetween(0, width),
+      y: isInitial ? randomBetween(height * 0.4, height) : height + 10,
+      riseSpeed: randomBetween(25, 70),
+      swayWidth: randomBetween(8, 30),
+      swayPhase: randomBetween(0, 6.28),
+      radius: randomBetween(1, 2.4)
+    };
+  }
+
+  var lastTimestamp = 0;
+
+  function drawFrame(timestamp) {
+    var deltaSeconds = Math.min((timestamp - lastTimestamp) / 1000 || 0, 0.05);
+    lastTimestamp = timestamp;
+
+    // Fondo negro
+    context.globalCompositeOperation = 'source-over';
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, width, height);
+    context.globalCompositeOperation = 'lighter';
+
+    // Resplandor base
+    var flicker = 0.25 + 0.15 * Math.sin(timestamp / 130) * Math.sin(timestamp / 370 + 1);
+    context.globalAlpha = 1;
+
+    var radialGlow = context.createRadialGradient(
+      width / 2, height * 1.05, 0,
+      width / 2, height * 1.05, Math.max(width, height) * 0.8
+    );
+    radialGlow.addColorStop(0, 'rgba(255,110,20,' + (0.5 * flicker) + ')');
+    radialGlow.addColorStop(0.4, 'rgba(190,45,10,' + (0.25 * flicker) + ')');
+    radialGlow.addColorStop(1, 'rgba(120,10,0,0)');
+    context.fillStyle = radialGlow;
+    context.fillRect(0, 0, width, height);
+
+    var bottomGlow = context.createLinearGradient(0, height, 0, height * 0.6);
+    bottomGlow.addColorStop(0, 'rgba(255,90,10,' + (0.35 * flicker) + ')');
+    bottomGlow.addColorStop(1, 'rgba(255,60,0,0)');
+    context.fillStyle = bottomGlow;
+    context.fillRect(0, height * 0.6, width, height * 0.4);
+
+    // Llamas
+    for (var i = 0; i < flames.length; i++) {
+      var flame = flames[i];
+      if (!prefersReducedMotion) flame.progress += deltaSeconds * flame.speed;
+      if (flame.progress >= 1) Object.assign(flame, createFlame(false));
+
+      var progress = flame.progress;
+      var flameX = flame.x + Math.sin(timestamp / 600 * flame.swaySpeed + flame.swayPhase) * 22 * progress;
+      var flameY = height + 10 - progress * flame.riseDistance;
+      var flameSize = flame.size * (1 - 0.55 * progress);
+      var flameAlpha = (progress < 0.15 ? progress / 0.15 : 1 - (progress - 0.15) / 0.85) * 0.32 * flicker;
+
+      context.globalAlpha = Math.max(0, flameAlpha);
+      var sprite = progress < 0.3 ? hotGlow : (progress < 0.65 ? mediumGlow : coolGlow);
+      context.drawImage(sprite, flameX - flameSize / 2, flameY - flameSize * 0.75, flameSize, flameSize * 1.5);
+    }
+
+    // Ascuas
+    for (var j = 0; j < embers.length; j++) {
+      var ember = embers[j];
+      if (!prefersReducedMotion) ember.y -= ember.riseSpeed * deltaSeconds;
+      if (ember.y < -10) Object.assign(ember, createEmber(false));
+
+      var emberX = ember.baseX + Math.sin(timestamp / 1000 * 1.2 + ember.swayPhase) * ember.swayWidth;
+      context.globalAlpha = Math.max(0, (ember.y / height - 0.1)) * 0.9;
+      context.drawImage(mediumGlow, emberX - ember.radius * 5, ember.y - ember.radius * 5, ember.radius * 10, ember.radius * 10);
+      context.drawImage(hotGlow, emberX - ember.radius, ember.y - ember.radius, ember.radius * 2, ember.radius * 2);
+    }
+
+    context.globalAlpha = 1;
+    if (!prefersReducedMotion) requestAnimationFrame(drawFrame);
+  }
+
+  window.addEventListener('resize', function () {
+    resizeCanvas();
+    if (prefersReducedMotion) drawFrame(0);
+  });
+
+  resizeCanvas();
+  requestAnimationFrame(drawFrame);
+})();
+</script>
+</body>
+</html>
