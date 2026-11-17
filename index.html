@@ -1,9 +1,124 @@
-<html>
-    <head>
-        <title>My Web Page</title>
-    </head>
-    <body>
-        <a href="./proximamente.html">Comming soon v1</a>
-        <a href="./proximamente2.html">Comming soon v2</a>
-        <a href="./proximamente3.html">Comming soon v3</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doblajes y Mazmorras</title>
+<style>
+:root {
+  --bg: #eef1ec;
+  --surface: #fbfcfa;
+  --ink: #1f2a24;
+  --muted: #5d6b62;
+  --line: #d3dacf;
+  --accent: #2f6b57;
+  --accent-ink: #ffffff;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a16;
+    --surface: #1b251f;
+    --ink: #e8efe9;
+    --muted: #9bab9f;
+    --line: #2d3b32;
+    --accent: #7fc3a9;
+    --accent-ink: #10231a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131a16;
+  --surface: #1b251f;
+  --ink: #e8efe9;
+  --muted: #9bab9f;
+  --line: #2d3b32;
+  --accent: #7fc3a9;
+  --accent-ink: #10231a;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+main {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+}
+h1 {
+  font-size: clamp(2rem, 7vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 .4rem;
+}
+.intro {
+  color: var(--muted);
+  margin: 0 0 2.2rem;
+  font-size: 1.05rem;
+}
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 2rem 0 .7rem;
+}
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.4rem;
+  padding: .75rem 1.1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 1.08rem;
+  font-weight: 500;
+  transition: background .15s, border-color .15s;
+}
+a small {
+  display: block;
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: 400;
+}
+a:hover { border-color: var(--accent); background: var(--bg); }
+a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a:active { transform: translateY(1px); }
+.go { color: var(--accent); flex: none; }
+@media (prefers-reduced-motion: reduce) { a { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Doblajes y Mazmorras</h1>
+  <p class="intro">Listado de páginas estáticas provisional</p>
+
+  <h2>Página {Proximamente}</h2>
+<h3>Versiones</h3>
+  <ul>
+    <li><a href="./proximamente.html" target="_blank" rel="noopener"><span>Versión 1<small>Solo logo</small></span><span class="go" aria-hidden="true">›</span></a></li>
+    <li><a href="./proximamente2.html" target="_blank" rel="noopener"><span>Versión 2<small>Logo arriba</small></span><span class="go" aria-hidden="true">›</span></a></li>
+    <li><a href="./proximamente3.html" target="_blank" rel="noopener"><span>Versión 3<small>Logo izquierda</small></span><span class="go" aria-hidden="true">›</span></a></li>
+  </ul>
+    <p>Falta <small>a valorar</small>:</p>
+    <ul>
+        <li>Enlaces redes sociales</li>
+        <li>Mail de contacto</li>
+        <li>Sonido ambiental</li>
+        <li>Imagenes de fondo</li>
+    </ul>
+</main>
+</body>
 </html>
