@@ -1,0 +1,7 @@
+packages:
+  - client
+  - server
+
+# pnpm 10 bloquea los scripts de instalación por defecto; esbuild (vite/tsx) necesita el suyo
+onlyBuiltDependencies:
+  - esbuild

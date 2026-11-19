@@ -1,0 +1,33 @@
+.logo {
+  width: clamp(120px, 20vw, 80vh);
+  color: var(--text);
+  transform: rotate(-1deg);
+  animation:
+    emerge 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) both,
+    float 5s ease-in-out 1.5s infinite;
+  transition: filter 0.3s;
+}
+
+.logo svg,
+.logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 18px rgba(255, 110, 30, 0.25));
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  .logo {
+    width: clamp(15rem, 75vw, 22rem);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateX(-5px) rotate(1deg);
+  }
+}

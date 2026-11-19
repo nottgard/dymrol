@@ -1,0 +1,48 @@
+.sound {
+  position: fixed;
+  z-index: 2;
+  right: calc(1rem + env(safe-area-inset-right, 0px));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sound:hover {
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.sound:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.sound svg {
+  width: 26px;
+  height: 26px;
+}
+
+.sound .on {
+  display: none;
+}
+
+.sound[aria-pressed='true'] .on {
+  display: block;
+}
+
+.sound[aria-pressed='true'] .off {
+  display: none;
+}

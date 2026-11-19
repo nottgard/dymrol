@@ -1,0 +1,45 @@
+.home {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.home__content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 1rem, 2.75rem);
+  padding: 0 1.5rem;
+  text-align: center;
+  animation: emerge 3.2s ease-out both;
+}
+
+.home__text {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: clamp(1.25rem, 1.4rem, 1.75rem);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.home__text span {
+  display: block;
+}
+
+.home__text .home__text--soft {
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 0.35em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__content {
+    animation: none;
+  }
+}

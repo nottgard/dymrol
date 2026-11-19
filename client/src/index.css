@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --text: #d9dde2;
+  --muted: #8d949d;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+}
+
+/* Animación compartida por varios componentes */
+@keyframes emerge {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
