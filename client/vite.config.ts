@@ -6,5 +6,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: { '/api': 'http://localhost:3001' },
+    allowedHosts: ['doblajesymazmorras.com', 'www.doblajesymazmorras.com', 'memorially-subhyaloid-armandina.ngrok-free.dev'],
   },
 });

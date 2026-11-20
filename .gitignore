@@ -1,0 +1,45 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Compilación y artefactos de build
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# Variables de entorno y credenciales (mantener ejemplos versionados)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cobertura de pruebas
+coverage/
+*.lcov
+.nyc_output/
+
+# Cachés de herramientas
+.cache/
+.vite/
+.eslintcache
+.prettiercache
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuraciones de editores / IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.sw?

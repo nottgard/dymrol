@@ -1,388 +1,419 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Contador martillo</title>
-    <style>
-      :root {
-        color-scheme: light dark;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      html,
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contador martillo</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        sans-serif;
+      background: #f4efe6;
+      color: #2b2118;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
       body {
-        height: 100%;
-        margin: 0;
+        background: #1d1914;
+        color: #f0e8da;
       }
-      body {
-        font-family:
-          system-ui,
-          -apple-system,
-          'Segoe UI',
-          sans-serif;
-        background: #f4efe6;
-        color: #2b2118;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #1d1914;
-          color: #f0e8da;
-        }
+    }
+
+    /* Zona de juego: aquí el cursor se convierte en martillo */
+    #zona {
+      width: min(92vw, 520px);
+      padding: 36px 24px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      background: rgba(127, 127, 127, 0.1);
+      border: 1px solid rgba(127, 127, 127, 0.25);
+      cursor: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    #zona * {
+      cursor: none;
+    }
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 6px;
+      opacity: 0.65;
+    }
+
+    #total {
+      font-size: clamp(4rem, 18vw, 7rem);
+      font-weight: 800;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      margin: 4px 0 22px;
+    }
+
+    #total.pop {
+      animation: pop 0.16s ease-out;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(1);
       }
 
-      /* Zona de juego: aquí el cursor se convierte en martillo */
-      #zona {
-        width: min(92vw, 520px);
-        padding: 36px 24px 32px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        border-radius: 20px;
-        background: rgba(127, 127, 127, 0.1);
-        border: 1px solid rgba(127, 127, 127, 0.25);
-        cursor: none;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: manipulation;
-      }
-      #zona * {
-        cursor: none;
+      40% {
+        transform: scale(1.12);
       }
 
-      h1 {
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin: 0 0 6px;
-        opacity: 0.65;
+      100% {
+        transform: scale(1);
       }
-      #total {
-        font-size: clamp(4rem, 18vw, 7rem);
-        font-weight: 800;
-        line-height: 1.1;
-        font-variant-numeric: tabular-nums;
-        margin: 4px 0 22px;
-      }
-      #total.pop {
-        animation: pop 0.16s ease-out;
-      }
-      @keyframes pop {
-        0% {
-          transform: scale(1);
-        }
-        40% {
-          transform: scale(1.12);
-        }
-        100% {
-          transform: scale(1);
-        }
-      }
+    }
 
-      #btn {
-        font: inherit;
-        font-size: 1.25rem;
-        font-weight: 700;
-        padding: 18px 44px;
-        border: 0;
-        border-radius: 14px;
-        background: #c8553d;
-        color: #fff;
-        box-shadow: 0 6px 0 #8f3a28;
-        transition:
-          transform 0.06s,
-          box-shadow 0.06s;
-      }
-      #btn:active,
-      #btn.hit {
-        transform: translateY(5px);
-        box-shadow: 0 1px 0 #8f3a28;
-      }
-      #btn:focus-visible {
-        outline: 3px solid #f2b705;
-        outline-offset: 4px;
-      }
+    #btn {
+      font: inherit;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 18px 44px;
+      border: 0;
+      border-radius: 14px;
+      background: #c8553d;
+      color: #fff;
+      box-shadow: 0 6px 0 #8f3a28;
+      transition:
+        transform 0.06s,
+        box-shadow 0.06s;
+    }
 
-      .hint {
-        margin: 22px 0 0;
-        font-size: 0.85rem;
-        opacity: 0.55;
-      }
-      #reset {
-        margin-top: 10px;
-        font: inherit;
-        font-size: 0.8rem;
-        background: none;
-        border: 0;
-        color: inherit;
-        opacity: 0.45;
-        text-decoration: underline;
-      }
+    #btn:active,
+    #btn.hit {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #8f3a28;
+    }
 
-      /* Martillo */
-      #martillo {
-        position: fixed;
-        left: 0;
-        top: 0;
-        z-index: 9999;
-        pointer-events: none;
-        display: none;
-        transform: translate(-50%, -22%); /* la cabeza queda en el puntero */
-      }
-      #martillo svg {
-        display: block;
-        width: 96px;
-        height: 96px;
-        transform-origin: 50% 94%; /* gira desde el mango */
+    #btn:focus-visible {
+      outline: 3px solid #f2b705;
+      outline-offset: 4px;
+    }
+
+    .hint {
+      margin: 22px 0 0;
+      font-size: 0.85rem;
+      opacity: 0.55;
+    }
+
+    #reset {
+      margin-top: 10px;
+      font: inherit;
+      font-size: 0.8rem;
+      background: none;
+      border: 0;
+      color: inherit;
+      opacity: 0.45;
+      text-decoration: underline;
+    }
+
+    /* Martillo */
+    #martillo {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 9999;
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -22%);
+      /* la cabeza queda en el puntero */
+    }
+
+    #martillo svg {
+      display: block;
+      width: 96px;
+      height: 96px;
+      transform-origin: 50% 94%;
+      /* gira desde el mango */
+      transform: rotate(32deg);
+      filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.3));
+    }
+
+    #martillo.golpe svg {
+      animation: golpe 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+    }
+
+    @keyframes golpe {
+      0% {
         transform: rotate(32deg);
-        filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.3));
-      }
-      #martillo.golpe svg {
-        animation: golpe 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
-      }
-      @keyframes golpe {
-        0% {
-          transform: rotate(32deg);
-        }
-        40% {
-          transform: rotate(-34deg);
-        }
-        55% {
-          transform: rotate(-30deg);
-        }
-        100% {
-          transform: rotate(32deg);
-        }
       }
 
-      /* +1 flotante */
+      40% {
+        transform: rotate(-34deg);
+      }
+
+      55% {
+        transform: rotate(-30deg);
+      }
+
+      100% {
+        transform: rotate(32deg);
+      }
+    }
+
+    /* +1 flotante */
+    .mas {
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+      font-weight: 800;
+      font-size: 1.6rem;
+      color: #c8553d;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+      animation: sube 0.8s ease-out forwards;
+    }
+
+    @keyframes sube {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.6);
+      }
+
+      15% {
+        opacity: 1;
+        transform: translate(-50%, -14px) scale(1.15);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -80px) scale(1);
+      }
+    }
+
+    /* Chispas del impacto */
+    .chispa {
+      position: fixed;
+      z-index: 9997;
+      pointer-events: none;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f2b705;
+      animation: chispa 0.45s ease-out forwards;
+    }
+
+    @keyframes chispa {
+      to {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(0.3);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      #martillo.golpe svg,
+      #total.pop {
+        animation: none;
+      }
+
       .mas {
-        position: fixed;
-        z-index: 9998;
-        pointer-events: none;
-        font-weight: 800;
-        font-size: 1.6rem;
-        color: #c8553d;
-        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
-        animation: sube 0.8s ease-out forwards;
-      }
-      @keyframes sube {
-        0% {
-          opacity: 0;
-          transform: translate(-50%, 0) scale(0.6);
-        }
-        15% {
-          opacity: 1;
-          transform: translate(-50%, -14px) scale(1.15);
-        }
-        100% {
-          opacity: 0;
-          transform: translate(-50%, -80px) scale(1);
-        }
+        animation-duration: 0.01s;
       }
 
-      /* Chispas del impacto */
       .chispa {
-        position: fixed;
-        z-index: 9997;
-        pointer-events: none;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #f2b705;
-        animation: chispa 0.45s ease-out forwards;
+        display: none;
       }
-      @keyframes chispa {
-        to {
-          opacity: 0;
-          transform: translate(var(--dx), var(--dy)) scale(0.3);
-        }
-      }
+    }
+  </style>
+</head>
 
-      @media (prefers-reduced-motion: reduce) {
-        #martillo.golpe svg,
-        #total.pop {
-          animation: none;
-        }
-        .mas {
-          animation-duration: 0.01s;
-        }
-        .chispa {
-          display: none;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main id="zona">
-      <h1>Golpes</h1>
-      <div id="total" aria-live="polite">0</div>
-      <button id="btn" type="button">¡Golpea!</button>
-      <p class="hint">Haz clic tantas veces como quieras</p>
-      <button id="reset" type="button">Reiniciar</button>
-    </main>
+<body>
+  <main id="zona">
+    <h1>Golpes</h1>
+    <div id="total" aria-live="polite">0</div>
+    <button id="btn" type="button">¡Golpea!</button>
+    <p class="hint">Haz clic tantas vecsfdases como quieras</p>
+    <button id="reset" type="button">Reiniciar</button>
+  </main>
 
-    <div id="martillo" aria-hidden="true">
-      <svg viewBox="0 0 100 100">
-        <defs>
-          <linearGradient id="mango" x1="0" x2="1">
-            <stop offset="0" stop-color="#b9783f" />
-            <stop offset="1" stop-color="#8a5629" />
-          </linearGradient>
-          <linearGradient id="cabeza" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stop-color="#a9afb8" />
-            <stop offset="1" stop-color="#5f6670" />
-          </linearGradient>
-        </defs>
-        <rect x="44" y="26" width="12" height="70" rx="5" fill="url(#mango)" />
-        <rect x="44" y="82" width="12" height="6" fill="#6e421c" opacity=".6" />
-        <rect x="12" y="8" width="76" height="28" rx="5" fill="url(#cabeza)" />
-        <rect x="12" y="8" width="12" height="28" rx="4" fill="#4d535c" />
-        <rect x="76" y="8" width="12" height="28" rx="4" fill="#4d535c" />
-        <rect x="28" y="11" width="44" height="4" rx="2" fill="#fff" opacity=".3" />
-      </svg>
-    </div>
+  <div id="martillo" aria-hidden="true">
+    <svg viewBox="0 0 100 100">
+      <defs>
+        <linearGradient id="mango" x1="0" x2="1">
+          <stop offset="0" stop-color="#b9783f" />
+          <stop offset="1" stop-color="#8a5629" />
+        </linearGradient>
+        <linearGradient id="cabeza" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#a9afb8" />
+          <stop offset="1" stop-color="#5f6670" />
+        </linearGradient>
+      </defs>
+      <rect x="44" y="26" width="12" height="70" rx="5" fill="url(#mango)" />
+      <rect x="44" y="82" width="12" height="6" fill="#6e421c" opacity=".6" />
+      <rect x="12" y="8" width="76" height="28" rx="5" fill="url(#cabeza)" />
+      <rect x="12" y="8" width="12" height="28" rx="4" fill="#4d535c" />
+      <rect x="76" y="8" width="12" height="28" rx="4" fill="#4d535c" />
+      <rect x="28" y="11" width="44" height="4" rx="2" fill="#fff" opacity=".3" />
+    </svg>
+  </div>
 
-    <script>
-      (function () {
-        var zona = document.getElementById('zona');
-        var martillo = document.getElementById('martillo');
-        var totalEl = document.getElementById('total');
-        var btn = document.getElementById('btn');
-        var reset = document.getElementById('reset');
-        var reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  <script>
+    (function () {
+      var zona = document.getElementById('zona');
+      var martillo = document.getElementById('martillo');
+      var totalEl = document.getElementById('total');
+      var btn = document.getElementById('btn');
+      var reset = document.getElementById('reset');
+      var reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        var total = 0;
+      var total = 0;
+      try {
+        total = parseInt(localStorage.getItem('golpes'), 10) || 0;
+      } catch (e) { }
+      totalEl.textContent = total;
+
+      var ctx = null;
+      function thud() {
         try {
-          total = parseInt(localStorage.getItem('golpes'), 10) || 0;
-        } catch (e) {}
+          ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+          var o = ctx.createOscillator(),
+            g = ctx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(170, ctx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.12);
+          g.gain.setValueAtTime(0.35, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start();
+          o.stop(ctx.currentTime + 0.16);
+        } catch (e) { }
+      }
+
+      function mover(x, y) {
+        martillo.style.display = 'block';
+        martillo.style.left = x + 'px';
+        martillo.style.top = y + 'px';
+      }
+
+      zona.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'mouse') mover(e.clientX, e.clientY);
+      });
+      zona.addEventListener('pointerleave', function (e) {
+        if (e.pointerType === 'mouse') martillo.style.display = 'none';
+      });
+
+      function golpe(x, y) {
+        mover(x, y);
+        martillo.classList.remove('golpe');
+        void martillo.offsetWidth; // reinicia la animación en clics rápidos
+        martillo.classList.add('golpe');
+
+        total++;
         totalEl.textContent = total;
+        try {
+          localStorage.setItem('golpes', total);
+        } catch (e) { }
+        totalEl.classList.remove('pop');
+        void totalEl.offsetWidth;
+        totalEl.classList.add('pop');
 
-        var ctx = null;
-        function thud() {
-          try {
-            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-            var o = ctx.createOscillator(),
-              g = ctx.createGain();
-            o.type = 'triangle';
-            o.frequency.setValueAtTime(170, ctx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.12);
-            g.gain.setValueAtTime(0.35, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-            o.connect(g);
-            g.connect(ctx.destination);
-            o.start();
-            o.stop(ctx.currentTime + 0.16);
-          } catch (e) {}
+        var mas = document.createElement('div');
+        mas.className = 'mas';
+        mas.textContent = '+1';
+        mas.style.left = x + 'px';
+        mas.style.top = y - 24 + 'px';
+        document.body.appendChild(mas);
+        setTimeout(function () {
+          mas.remove();
+        }, 850);
+
+        if (!reducir) {
+          generateSparks();
         }
+        thud();
+      }
 
-        function mover(x, y) {
-          martillo.style.display = 'block';
-          martillo.style.left = x + 'px';
-          martillo.style.top = y + 'px';
+      function generateSparks() {
+        for (var i = 0; i < 6; i++) {
+          var c = document.createElement('div');
+          c.className = 'chispa';
+          var a = Math.random() * Math.PI * 2,
+            d = 22 + Math.random() * 26;
+          c.style.left = x + 'px';
+          c.style.top = y + 'px';
+          c.style.setProperty('--dx', Math.cos(a) * d + 'px');
+          c.style.setProperty('--dy', Math.sin(a) * d + 'px');
+          document.body.appendChild(c);
+          setTimeout(
+            (function (n) {
+              return function () {
+                n.remove();
+              };
+            })(c),
+            500,
+          );
         }
+      }
 
-        zona.addEventListener('pointermove', function (e) {
-          if (e.pointerType === 'mouse') mover(e.clientX, e.clientY);
-        });
-        zona.addEventListener('pointerleave', function (e) {
-          if (e.pointerType === 'mouse') martillo.style.display = 'none';
-        });
-
-        function golpe(x, y) {
-          mover(x, y);
-          martillo.classList.remove('golpe');
-          void martillo.offsetWidth; // reinicia la animación en clics rápidos
-          martillo.classList.add('golpe');
-
-          total++;
-          totalEl.textContent = total;
-          try {
-            localStorage.setItem('golpes', total);
-          } catch (e) {}
-          totalEl.classList.remove('pop');
-          void totalEl.offsetWidth;
-          totalEl.classList.add('pop');
-
-          var mas = document.createElement('div');
-          mas.className = 'mas';
-          mas.textContent = '+1';
-          mas.style.left = x + 'px';
-          mas.style.top = y - 24 + 'px';
-          document.body.appendChild(mas);
+      // Clic de ratón / toque en cualquier punto de la zona
+      zona.addEventListener('pointerdown', function (e) {
+        if (e.target === reset) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        golpe(e.clientX, e.clientY);
+        btn.classList.add('hit');
+        setTimeout(function () {
+          btn.classList.remove('hit');
+        }, 90);
+        if (e.pointerType !== 'mouse') {
           setTimeout(function () {
-            mas.remove();
-          }, 850);
-
-          if (!reducir) {
-            generateSparks();
-          }
-          thud();
+            martillo.style.display = 'none';
+          }, 300);
         }
+      });
 
-        function generateSparks() {
-          for (var i = 0; i < 6; i++) {
-            var c = document.createElement('div');
-            c.className = 'chispa';
-            var a = Math.random() * Math.PI * 2,
-              d = 22 + Math.random() * 26;
-            c.style.left = x + 'px';
-            c.style.top = y + 'px';
-            c.style.setProperty('--dx', Math.cos(a) * d + 'px');
-            c.style.setProperty('--dy', Math.sin(a) * d + 'px');
-            document.body.appendChild(c);
-            setTimeout(
-              (function (n) {
-                return function () {
-                  n.remove();
-                };
-              })(c),
-              500,
-            );
-          }
-        }
-
-        // Clic de ratón / toque en cualquier punto de la zona
-        zona.addEventListener('pointerdown', function (e) {
-          if (e.target === reset) return;
-          if (e.pointerType === 'mouse' && e.button !== 0) return;
-          golpe(e.clientX, e.clientY);
-          btn.classList.add('hit');
+      // Teclado: Enter o Espacio sobre el botón
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          var r = btn.getBoundingClientRect();
+          golpe(r.left + r.width / 2, r.top + r.height / 2);
           setTimeout(function () {
-            btn.classList.remove('hit');
-          }, 90);
-          if (e.pointerType !== 'mouse') {
-            setTimeout(function () {
-              martillo.style.display = 'none';
-            }, 300);
-          }
-        });
+            martillo.style.display = 'none';
+          }, 300);
+        }
+      });
 
-        // Teclado: Enter o Espacio sobre el botón
-        btn.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            var r = btn.getBoundingClientRect();
-            golpe(r.left + r.width / 2, r.top + r.height / 2);
-            setTimeout(function () {
-              martillo.style.display = 'none';
-            }, 300);
-          }
-        });
+      reset.addEventListener('click', function () {
+        total = 0;
+        totalEl.textContent = 0;
+        try {
+          localStorage.removeItem('golpes');
+        } catch (e) { }
+      });
+    })();
+  </script>
+</body>
 
-        reset.addEventListener('click', function () {
-          total = 0;
-          totalEl.textContent = 0;
-          try {
-            localStorage.removeItem('golpes');
-          } catch (e) {}
-        });
-      })();
-    </script>
-  </body>
 </html>

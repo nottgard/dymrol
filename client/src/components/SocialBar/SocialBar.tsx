@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { socialLinks } from './socialLinks.ts';
 import './SocialBar.css';
 
@@ -5,9 +6,16 @@ export default function SocialBar() {
   return (
     <nav className="socials" aria-label="Redes sociales">
       <ul>
-        {socialLinks.map(({ name, href, path }) => (
+        {socialLinks.map(({ name, href, path, color }) => (
           <li key={name}>
-            <a href={href} target="_blank" rel="noopener noreferrer" aria-label={name} title={name}>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={name}
+              title={name}
+              style={{ '--brand-color': color } as CSSProperties}
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d={path} />
               </svg>

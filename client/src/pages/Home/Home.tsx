@@ -1,4 +1,5 @@
 import FireBackground from '../../components/FireBackground/FireBackground.tsx';
+import HammerCounter from '../../components/HammerCounter/HammerCounter.tsx';
 import Logo from '../../components/Logo/Logo.tsx';
 import SocialBar from '../../components/SocialBar/SocialBar.tsx';
 import SoundToggle from '../../components/SoundToggle/SoundToggle.tsx';
@@ -17,6 +18,8 @@ export default function Home() {
             ¡Ayúdanos en la forja con tu martillo!
           </span>
         </p>
+
+        <HammerCounter />
       </main>
 
       <SocialBar />

@@ -4,7 +4,8 @@
   left: 0;
   right: 0;
   bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  padding: 0 3.5rem; /* deja libre el botón de sonido */
+  padding: 0 3.5rem;
+  /* deja libre el botón de sonido */
   pointer-events: none;
 }
 
@@ -29,17 +30,19 @@
   filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
   transition:
     color 0.2s ease,
-    transform 0.2s ease;
+  transform 0.2s ease,
+  filter 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .socials a:hover {
-  color: #ffb347;
+  color: var(--brand-color, #ffb347);
   transform: translateY(-2px);
+  filter: drop-shadow(0 0 8px var(--brand-color, rgba(255, 179, 71, 0.6)));
 }
 
 .socials a:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline: 2px solid var(--brand-color, rgba(255, 255, 255, 0.7));
   outline-offset: 2px;
   border-radius: 6px;
 }

@@ -1,19 +1,20 @@
 .home {
   position: fixed;
   inset: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .home__content {
   position: relative;
   z-index: 1;
-  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1.5rem, 1rem, 2.75rem);
-  padding: 0 1.5rem;
+  justify-content: center;
+  gap: clamp(1rem, 2.2vh, 2rem);
+  padding: 0 1.5rem 5.5rem;
   text-align: center;
   animation: emerge 3.2s ease-out both;
 }
@@ -26,6 +27,18 @@
   line-height: 1.45;
   letter-spacing: 0.01em;
   color: var(--text);
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  .home__text {
+    margin: 0;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    font-weight: 300;
+    font-size: clamp(0.9rem, 1.1rem, 0.95rem);
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
 }
 
 .home__text span {

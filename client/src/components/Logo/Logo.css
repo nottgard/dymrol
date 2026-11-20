@@ -18,15 +18,17 @@
 
 @media only screen and (hover: none) and (pointer: coarse) {
   .logo {
-    width: clamp(15rem, 75vw, 22rem);
+    width: clamp(12rem, 30vw, 22rem);
   }
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateX(0) rotate(-1deg);
   }
+
   50% {
     transform: translateX(-5px) rotate(1deg);
   }
