@@ -1,0 +1,484 @@
+/* Zona de juego */
+.hammer-zone-v2 {
+  width: 100%;
+  max-width: 800px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 16px;
+  text-align: center;
+  position: relative;
+  overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  margin: 0 auto;
+}
+
+/* .hammer-zone-v2:hover {
+  border-color: rgba(255, 110, 30, 0.3);
+  box-shadow: 0 14px 36px rgba(255, 110, 30, 0.12);
+} */
+
+.hammer-zone-v2 * {
+  cursor: none;
+}
+
+/* =========================================
+   Cabecera superior: Título y Golpes Totales
+   ========================================= */
+.hammer-header-v2 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 0px;
+  border-bottom: 0px solid rgba(255, 255, 255, 0.08);
+}
+
+.hammer-header-v2__title {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--muted, #8d949d);
+}
+
+.hammer-total-badge-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  width: auto;
+  margin-bottom: 1rem;
+}
+
+.hammer-total-badge-v2__label {
+  color: var(--muted, #8d949d);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hammer-total-badge-v2__value {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f2b705;
+  text-shadow: 0 0 8px rgba(242, 183, 5, 0.4);
+  display: inline-block;
+  transition: transform 0.1s;
+}
+
+.hammer-total-badge-v2__value.pop {
+  animation: hammer-total-pop 0.16s ease-out;
+}
+
+@keyframes hammer-total-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    color: #fff;
+    text-shadow: 0 0 12px #f2b705;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* =========================================
+   Barra de Progreso y Niveles
+   ========================================= */
+.hammer-progress-v2 {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.hammer-progress-v2__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hammer-progress-v2__badge {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f2b705;
+  text-shadow: 0 0 10px rgba(242, 183, 5, 0.3);
+}
+
+.hammer-progress-v2__counter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted, #8d949d);
+}
+
+/* Indicadores de 6 pasos/niveles */
+.hammer-progress-v2__steps {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.hammer-progress-v2__step {
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+
+.hammer-progress-v2__step--completed {
+  background: rgba(242, 183, 5, 0.2);
+  border: 1px solid rgba(242, 183, 5, 0.6);
+  color: #f2b705;
+  box-shadow: 0 0 8px rgba(242, 183, 5, 0.2);
+}
+
+.hammer-progress-v2__step--active {
+  background: rgba(200, 85, 61, 0.35);
+  border: 1px solid #c8553d;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(200, 85, 61, 0.45);
+  animation: hammer-step-pulse 1.8s infinite;
+}
+
+.hammer-progress-v2__step--locked {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes hammer-step-pulse {
+
+  0%,
+  100% {
+    border-color: #c8553d;
+    box-shadow: 0 0 6px rgba(200, 85, 61, 0.3);
+  }
+
+  50% {
+    border-color: #f2b705;
+    box-shadow: 0 0 12px rgba(242, 183, 5, 0.6);
+  }
+}
+
+/* Pista y relleno de la barra */
+.hammer-progress-v2__track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  overflow: visible;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+}
+
+.hammer-progress-v2__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c8553d 0%, #e56a4e 50%, #f2b705 100%);
+  box-shadow: 0 0 14px rgba(242, 183, 5, 0.6);
+  transition: width 0.16s ease-out;
+  position: relative;
+}
+
+.hammer-progress-v2__text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.95),
+    0 0 5px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+}
+
+.hammer-progress-v2__fill.pop {
+  animation: hammer-bar-glow 0.18s ease-out;
+}
+
+@keyframes hammer-bar-glow {
+  0% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.6) drop-shadow(0 0 8px #f2b705);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* =========================================
+   Botón y Controles
+   ========================================= */
+.hammer-zone-v2__btn {
+  font: inherit;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 0;
+  cursor: none;
+  margin: 4px auto 0;
+  transition: transform 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hammer-zone-v2__anvil {
+  width: clamp(19vh, 21vh, 25vh);
+  height: auto;
+  aspect-ratio: 1;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 12px rgba(200, 85, 61, 0.25));
+  transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+.hammer-zone-v2__btn:hover .hammer-zone-v2__anvil {
+  filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(242, 183, 5, 0.5));
+}
+
+.hammer-zone-v2__btn:active .hammer-zone-v2__anvil,
+.hammer-zone-v2__btn.hit .hammer-zone-v2__anvil {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 26px rgba(242, 183, 5, 0.95)) brightness(1.2);
+}
+
+.hammer-zone-v2__btn-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(200, 85, 61, 0.88);
+  padding: 6px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 183, 5, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  transition:
+    transform 0.08s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.hammer-zone-v2__btn:hover .hammer-zone-v2__btn-label {
+  background: #d45f47;
+  border-color: #f2b705;
+  box-shadow: 0 4px 16px rgba(242, 183, 5, 0.35);
+}
+
+.hammer-zone-v2__btn:active .hammer-zone-v2__btn-label,
+.hammer-zone-v2__btn.hit .hammer-zone-v2__btn-label {
+  transform: scale(0.95);
+}
+
+.hammer-zone-v2__btn:focus-visible {
+  outline: 0px transparent;
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.hammer-zone-v2__hint {
+  margin: 25px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted, #8d949d);
+  opacity: 0.75;
+}
+
+.hammer-zone-v2__reset {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  background: none;
+  border: 0;
+  color: var(--muted, #8d949d);
+  opacity: 0.55;
+  text-decoration: underline;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    color 0.2s;
+}
+
+.hammer-zone-v2__reset:hover {
+  opacity: 0.9;
+  color: #f0e8da;
+}
+
+.hammer-zone-v2__reset:focus-visible {
+  outline: 2px solid #f2b705;
+  border-radius: 4px;
+}
+
+/* =========================================
+   Martillo flotante
+   ========================================= */
+.hammer-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  transform: translate(-50%, -22%);
+  /* la cabeza queda en el puntero */
+}
+
+.hammer-cursor svg,
+.hammer-cursor img {
+  display: block;
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  transform-origin: 50% 94%;
+  /* gira desde el mango */
+  transform: rotate(32deg);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.hammer-cursor.golpe svg,
+.hammer-cursor.golpe img {
+  animation: hammer-golpe 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes hammer-golpe {
+  0% {
+    transform: rotate(32deg);
+  }
+
+  40% {
+    transform: rotate(-34deg);
+  }
+
+  55% {
+    transform: rotate(-30deg);
+  }
+
+  100% {
+    transform: rotate(32deg);
+  }
+}
+
+/* =========================================
+   Capa de efectos flotantes (+1 y chispas)
+   ========================================= */
+.hammer-effects-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  overflow: hidden;
+}
+
+/* +1 flotante */
+.mas {
+  position: fixed;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #e56a4e;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(229, 106, 78, 0.5);
+  animation: hammer-sube 0.8s ease-out forwards;
+}
+
+@keyframes hammer-sube {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -14px) scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -80px) scale(1);
+  }
+}
+
+/* Chispas del impacto */
+.chispa {
+  position: fixed;
+  pointer-events: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f2b705;
+  box-shadow: 0 0 8px #f2b705;
+  animation: hammer-chispa 0.45s ease-out forwards;
+}
+
+@keyframes hammer-chispa {
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hammer-cursor.golpe svg,
+  .hammer-cursor.golpe img,
+  .hammer-progress-v2__fill.pop,
+  .hammer-total-badge-v2__value.pop,
+  .hammer-progress-v2__step--active {
+    animation: none;
+  }
+
+  .mas {
+    animation-duration: 0.01s;
+  }
+
+  .chispa {
+    display: none;
+  }
+}

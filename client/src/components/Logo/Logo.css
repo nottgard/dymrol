@@ -1,5 +1,5 @@
 .logo {
-  width: clamp(120px, 20vw, 80vh);
+  width: clamp(120px, 23vw, 80vh);
   color: var(--text);
   transform: rotate(-1deg);
   animation:
@@ -18,7 +18,7 @@
 
 @media only screen and (hover: none) and (pointer: coarse) {
   .logo {
-    width: clamp(12rem, 30vw, 22rem);
+    width: clamp(18rem, 30vw, 22rem);
   }
 }
 

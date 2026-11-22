@@ -4,6 +4,7 @@
   width: 100%;
   height: 100%;
   display: block;
+  pointer-events: none;
 }
 
 /* Calor: tiñe de naranja la niebla de abajo */

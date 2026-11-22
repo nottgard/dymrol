@@ -19,7 +19,7 @@ import './HammerCounter.css';
  *   Nivel 6 -> DEFAULT_LEVEL_THRESHOLDS[5] golpes (Nivel final / máximo)
  * ============================================================================
  */
-export const DEFAULT_LEVEL_THRESHOLDS: number[] = [10, 25, 50, 100, 200, 500];
+export const DEFAULT_LEVEL_THRESHOLDS: number[] = [1000, 2500, 5000, 10000, 20000, 50000];
 
 /**
  * ============================================================================
@@ -55,7 +55,8 @@ export function calculateLevelProgress(
   let remaining = Math.max(0, totalHits);
 
   for (let i = 0; i < maxLevels; i++) {
-    const target = thresholds[i] > 0 ? thresholds[i] : 1;
+    const threshold = thresholds[i] ?? 1;
+    const target = threshold > 0 ? threshold : 1;
     const isLast = i === maxLevels - 1;
 
     if (isLast) {

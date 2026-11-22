@@ -4,7 +4,7 @@ import './SoundToggle.css';
 export default function SoundToggle() {
   const [on, setOn] = useState(false);
 
-  // TODO: poner audio de ambiente. Reproducir/pausar aquí según el nuevo estado.
+  // TODO: poner audio de ambiente.
   function toggle() {
     setOn((prev) => !prev);
   }

@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=New+Rocker&family=Germania+One&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap');
+.home {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  cursor: none;
+}
+
+.home,
+.home * {
+  cursor: none;
+}
+
+.home a,
+.home button.sound,
+.home .socials a {
+  cursor: pointer;
+}
+
+.home__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 1.5vh, 1.25rem);
+  padding: clamp(0.75rem, 2vh, 1.5rem) 1.5rem calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  animation: emerge 3.2s ease-out both;
+}
+
+.home__text {
+  margin: 0;
+  font-family: 'New Rocker', Georgia, 'Times New Roman', serif;
+  font-weight: 300;
+  font-size: clamp(1.25rem, 1.4rem, 1.75rem);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  .home__text {
+    margin: 0;
+    font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    font-weight: 300;
+    font-size: clamp(1.4rem, 1.49rem, 1.8rem);
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+}
+
+.home__text span {
+  display: block;
+}
+
+.home__text .home__text--soft {
+  font-family: 'Germania One', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 0.35em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__content {
+    animation: none;
+  }
+}
