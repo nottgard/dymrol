@@ -13,7 +13,13 @@
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  margin: 0 auto;
+  margin: 6rem auto;
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+  .hammer-zone-v2 {
+    margin: 1rem auto;
+  }
 }
 
 /* .hammer-zone-v2:hover {

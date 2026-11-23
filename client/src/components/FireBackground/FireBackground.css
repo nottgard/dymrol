@@ -14,8 +14,8 @@
   pointer-events: none;
   background: linear-gradient(
     to top,
-    rgba(255, 85, 10, 0.38),
-    rgba(255, 60, 0, 0.12) 40%,
+    rgba(255, 85, 10, 0.28),
+    rgba(255, 60, 0, 0.2) 10%,
     transparent 65%
   );
   mix-blend-mode: screen;

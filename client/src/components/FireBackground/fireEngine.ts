@@ -80,11 +80,6 @@ export function startFire(canvas: HTMLCanvasElement, prefersReducedMotion: boole
     canvas.width = width * pixelRatio;
     canvas.height = height * pixelRatio;
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-    // NOTA: tal como estaba en el HTML original, Math.min(0, ...) hace que siempre sea 0
-    // (no se dibujan llamas, solo resplandor y ascuas). Cambia a Math.min(<máx>, ...) para activarlas.
-    const flameCount = Math.round(Math.min(0, Math.max(2, width / 12)));
-    flames = Array.from({ length: flameCount }, () => createFlame(true));
     embers = Array.from({ length: 40 }, () => createEmber(true));
   }
 
@@ -94,7 +89,7 @@ export function startFire(canvas: HTMLCanvasElement, prefersReducedMotion: boole
 
     // Fondo negro
     context.globalCompositeOperation = 'source-over';
-    context.fillStyle = '#000';
+    context.fillStyle = '#0a0618ff';
     context.fillRect(0, 0, width, height);
     context.globalCompositeOperation = 'lighter';
 
@@ -121,30 +116,6 @@ export function startFire(canvas: HTMLCanvasElement, prefersReducedMotion: boole
     bottomGlow.addColorStop(1, 'rgba(255,60,0,0)');
     context.fillStyle = bottomGlow;
     context.fillRect(0, height * 0.6, width, height * 0.4);
-
-    // Llamas
-    for (const flame of flames) {
-      if (!prefersReducedMotion) flame.progress += deltaSeconds * flame.speed;
-      if (flame.progress >= 1) Object.assign(flame, createFlame(false));
-
-      const progress = flame.progress;
-      const flameX =
-        flame.x + Math.sin((timestamp / 600) * flame.swaySpeed + flame.swayPhase) * 22 * progress;
-      const flameY = height + 10 - progress * flame.riseDistance;
-      const flameSize = flame.size * (1 - 0.55 * progress);
-      const flameAlpha =
-        (progress < 0.15 ? progress / 0.15 : 1 - (progress - 0.15) / 0.85) * 0.32 * flicker;
-
-      context.globalAlpha = Math.max(0, flameAlpha);
-      const sprite = progress < 0.3 ? hotGlow : progress < 0.65 ? mediumGlow : coolGlow;
-      context.drawImage(
-        sprite,
-        flameX - flameSize / 2,
-        flameY - flameSize * 0.75,
-        flameSize,
-        flameSize * 1.5,
-      );
-    }
 
     // Ascuas
     for (const ember of embers) {
