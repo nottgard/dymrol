@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { setSoundOn, syncAudioElements, useSoundOn } from '../../audio/soundState.ts';
 import './SoundToggle.css';
 
 export default function SoundToggle() {
-  const [on, setOn] = useState(false);
+  const on = useSoundOn();
 
-  // TODO: poner audio de ambiente.
+  // Silencia/activa todas las etiquetas <audio> de la página (las del martillo se controlan en useHammerSound)
+  useEffect(() => syncAudioElements(), []);
+
   function toggle() {
-    setOn((prev) => !prev);
+    setSoundOn(!on);
   }
 
   return (
@@ -14,7 +17,7 @@ export default function SoundToggle() {
       className="sound"
       type="button"
       aria-pressed={on}
-      aria-label={on ? 'Desactivar música de fondo' : 'Activar música de fondo'}
+      aria-label={on ? 'Silenciar sonido' : 'Activar sonido'}
       onClick={toggle}
     >
       <svg

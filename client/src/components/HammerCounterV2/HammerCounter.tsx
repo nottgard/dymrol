@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import HammerCursor from './HammerCursor.tsx';
 import { useHammerSound } from './useHammerSound.ts';
 import './HammerCounter.css';
 import { FireFlame } from '../FireFlame/FireFlame.tsx';
+import { api } from '../../api/client.ts';
 
 /**
  * Estos 6 números deciden el límite de golpes de cada nivel.
@@ -18,6 +19,13 @@ import { FireFlame } from '../FireFlame/FireFlame.tsx';
  * ============================================================================
  */
 export const DEFAULT_LEVEL_THRESHOLDS: number[] = [1000, 2500, 5000, 10000, 20000, 50000];
+
+/** Tiempo sin golpear (ms) tras el que se envían al servidor los golpes acumulados. */
+const FLUSH_DELAY_MS = 700;
+/** Cada cuánto (ms) se vuelve a leer el total del servidor. */
+const POLL_INTERVAL_MS = 5000;
+/** Espera (ms) antes de reintentar si falla el envío. */
+const FLUSH_RETRY_MS = 3000;
 
 /**
  * Modifica este valor para que cada clic sume más de un golpe (+1, +2, +5, +10...).
@@ -94,25 +102,97 @@ export function calculateLevelProgress(
 
 export interface HammerCounterProps {
   className?: string;
-  storageKey?: string;
   levelThresholds?: number[];
   hitPower?: number | number[];
 }
 
 export function HammerCounter({
   className = '',
-  storageKey = 'golpes',
   levelThresholds = DEFAULT_LEVEL_THRESHOLDS,
   hitPower = DEFAULT_HIT_POWER,
 }: HammerCounterProps) {
-  const [total, setTotal] = useState<number>(() => {
+  // Total guardado en la base de datos (compartido por todos los usuarios)
+  const [synced, setSynced] = useState<number>(0);
+  // Golpes de este usuario aún no confirmados por el servidor (sin enviar + en vuelo)
+  const [unsynced, setUnsynced] = useState<number>(0);
+  const total = synced + unsynced;
+
+  const unsentRef = useRef(0); // golpes acumulados que todavía no se han enviado
+  const inFlightRef = useRef(0); // golpes de la petición en curso
+  const flushTimerRef = useRef<number | undefined>(undefined);
+  const postSeqRef = useRef(0); // sube con cada POST confirmado; sirve para descartar lecturas obsoletas
+  const flushRef = useRef<() => void>(() => {}); // permite que flush se reprograme a sí misma
+
+  // Envía los golpes acumulados al servidor (una sola petición a la vez)
+  const flush = useCallback(async () => {
+    window.clearTimeout(flushTimerRef.current);
+    if (inFlightRef.current > 0 || unsentRef.current === 0) return;
+
+    const amount = unsentRef.current;
+    unsentRef.current = 0;
+    inFlightRef.current = amount;
     try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? parseInt(saved, 10) || 0 : 0;
+      const { smashes } = await api.post<{ smashes: string }>('/forge-counter', { amount });
+      postSeqRef.current += 1;
+      // La respuesta ya incluye nuestros golpes y los de los demás usuarios
+      setSynced(Number(smashes));
+      setUnsynced((u) => u - amount);
+      inFlightRef.current = 0;
+      if (unsentRef.current > 0) flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_DELAY_MS);
     } catch {
-      return 0;
+      // Falló el envío: devolvemos los golpes a la cola y reintentamos más tarde
+      unsentRef.current += amount;
+      inFlightRef.current = 0;
+      flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_RETRY_MS);
     }
-  });
+  }, []);
+  useEffect(() => {
+    flushRef.current = flush;
+  }, [flush]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Lee el total del servidor (así se ven los golpes de otros usuarios)
+    const fetchTotal = () => {
+      const seq = postSeqRef.current;
+      api
+        .get<{ smashes: string }>('/forge-counter')
+        .then(({ smashes }) => {
+          // Si mientras tanto llegó la respuesta de un POST, esta lectura es más antigua: se descarta
+          if (!cancelled && seq === postSeqRef.current) setSynced(Number(smashes));
+        })
+        .catch(() => {
+          // Sin servidor: se mantiene el último valor y sigue funcionando en local
+        });
+    };
+
+    fetchTotal();
+    // Polling: solo con la pestaña visible, y al volver a verla se refresca de inmediato
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchTotal();
+    }, POLL_INTERVAL_MS);
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') fetchTotal();
+    };
+    document.addEventListener('visibilitychange', refreshOnVisible);
+
+    // Al cerrar o ocultar la pestaña, envía lo pendiente para no perder golpes
+    const sendPendingBeacon = () => {
+      if (document.visibilityState !== 'hidden' || unsentRef.current === 0) return;
+      const body = new Blob([JSON.stringify({ amount: unsentRef.current })], { type: 'application/json' });
+      if (navigator.sendBeacon('/api/forge-counter', body)) unsentRef.current = 0;
+    };
+    document.addEventListener('visibilitychange', sendPendingBeacon);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', sendPendingBeacon);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+      window.clearInterval(pollId);
+      window.clearTimeout(flushTimerRef.current);
+    };
+  }, []);
 
   const thresholds = useMemo(
     () => (levelThresholds && levelThresholds.length === 6 ? levelThresholds : DEFAULT_LEVEL_THRESHOLDS),
@@ -156,16 +236,11 @@ export function HammerCounter({
       hammerRef.current.classList.add('golpe');
     }
 
-    // Actualizar total y guardar
-    setTotal((prev) => {
-      const next = prev + currentPower;
-      try {
-        localStorage.setItem(storageKey, String(next));
-      } catch {
-        // En caso de modo incógnito o storage deshabilitado
-      }
-      return next;
-    });
+    // Acumular el golpe y programar el envío cuando pare de golpear
+    unsentRef.current += currentPower;
+    setUnsynced((u) => u + currentPower);
+    window.clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_DELAY_MS);
 
     // Destello de impacto en el contador total
     if (totalDisplayRef.current) {
@@ -300,15 +375,6 @@ export function HammerCounter({
     }
   };
 
-  const handleReset = () => {
-    setTotal(0);
-    try {
-      localStorage.removeItem(storageKey);
-    } catch {
-      // Ignorar
-    }
-  };
-
   return (
     <>
       <section
@@ -361,14 +427,6 @@ export function HammerCounter({
 
         <p className="hammer-zone-v2__hint"></p>
 
-        {/* <button
-          ref={resetRef}
-          className="hammer-zone__reset"
-          type="button"
-          onClick={handleReset}
-        >
-          Reiniciar progreso
-        </button> */}
 
       </section>
 
