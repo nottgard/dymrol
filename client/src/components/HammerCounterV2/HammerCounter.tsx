@@ -1,9 +1,18 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import HammerCursor from './HammerCursor.tsx';
 import { useHammerSound } from './useHammerSound.ts';
-import './HammerCounter.css';
 import { FireFlame } from '../FireFlame/FireFlame.tsx';
+import { api } from '../../api/client.ts';
+
+// Clases que se añaden/quitan desde JS para reiniciar animaciones (deben ser strings literales para que Tailwind las detecte)
+const CLS_GOLPE = 'golpe';
+const CLS_POP_TOTAL = 'animate-pop-total';
+const CLS_POP_BAR = 'animate-bar-glow';
+const CLS_MAS =
+  'fixed pointer-events-none font-extrabold text-2xl text-ember [text-shadow:0_1px_2px_rgba(0,0,0,0.8),0_0_10px_rgba(229,106,78,0.5)] animate-sube';
+const CLS_CHISPA =
+  'fixed pointer-events-none size-1.5 rounded-full bg-gold shadow-[0_0_8px_#f2b705] animate-chispa';
 
 /**
  * Estos 6 números deciden el límite de golpes de cada nivel.
@@ -18,6 +27,13 @@ import { FireFlame } from '../FireFlame/FireFlame.tsx';
  * ============================================================================
  */
 export const DEFAULT_LEVEL_THRESHOLDS: number[] = [1000, 2500, 5000, 10000, 20000, 50000];
+
+/** Tiempo sin golpear (ms) tras el que se envían al servidor los golpes acumulados. */
+const FLUSH_DELAY_MS = 700;
+/** Cada cuánto (ms) se vuelve a leer el total del servidor. */
+const POLL_INTERVAL_MS = 5000;
+/** Espera (ms) antes de reintentar si falla el envío. */
+const FLUSH_RETRY_MS = 3000;
 
 /**
  * Modifica este valor para que cada clic sume más de un golpe (+1, +2, +5, +10...).
@@ -94,25 +110,97 @@ export function calculateLevelProgress(
 
 export interface HammerCounterProps {
   className?: string;
-  storageKey?: string;
   levelThresholds?: number[];
   hitPower?: number | number[];
 }
 
 export function HammerCounter({
   className = '',
-  storageKey = 'golpes',
   levelThresholds = DEFAULT_LEVEL_THRESHOLDS,
   hitPower = DEFAULT_HIT_POWER,
 }: HammerCounterProps) {
-  const [total, setTotal] = useState<number>(() => {
+  // Total guardado en la base de datos (compartido por todos los usuarios)
+  const [synced, setSynced] = useState<number>(0);
+  // Golpes de este usuario aún no confirmados por el servidor (sin enviar + en vuelo)
+  const [unsynced, setUnsynced] = useState<number>(0);
+  const total = synced + unsynced;
+
+  const unsentRef = useRef(0); // golpes acumulados que todavía no se han enviado
+  const inFlightRef = useRef(0); // golpes de la petición en curso
+  const flushTimerRef = useRef<number | undefined>(undefined);
+  const postSeqRef = useRef(0); // sube con cada POST confirmado; sirve para descartar lecturas obsoletas
+  const flushRef = useRef<() => void>(() => {}); // permite que flush se reprograme a sí misma
+
+  // Envía los golpes acumulados al servidor (una sola petición a la vez)
+  const flush = useCallback(async () => {
+    window.clearTimeout(flushTimerRef.current);
+    if (inFlightRef.current > 0 || unsentRef.current === 0) return;
+
+    const amount = unsentRef.current;
+    unsentRef.current = 0;
+    inFlightRef.current = amount;
     try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? parseInt(saved, 10) || 0 : 0;
+      const { smashes } = await api.post<{ smashes: string }>('/forge-counter', { amount });
+      postSeqRef.current += 1;
+      // La respuesta ya incluye nuestros golpes y los de los demás usuarios
+      setSynced(Number(smashes));
+      setUnsynced((u) => u - amount);
+      inFlightRef.current = 0;
+      if (unsentRef.current > 0) flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_DELAY_MS);
     } catch {
-      return 0;
+      // Falló el envío: devolvemos los golpes a la cola y reintentamos más tarde
+      unsentRef.current += amount;
+      inFlightRef.current = 0;
+      flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_RETRY_MS);
     }
-  });
+  }, []);
+  useEffect(() => {
+    flushRef.current = flush;
+  }, [flush]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Lee el total del servidor (así se ven los golpes de otros usuarios)
+    const fetchTotal = () => {
+      const seq = postSeqRef.current;
+      api
+        .get<{ smashes: string }>('/forge-counter')
+        .then(({ smashes }) => {
+          // Si mientras tanto llegó la respuesta de un POST, esta lectura es más antigua: se descarta
+          if (!cancelled && seq === postSeqRef.current) setSynced(Number(smashes));
+        })
+        .catch(() => {
+          // Sin servidor: se mantiene el último valor y sigue funcionando en local
+        });
+    };
+
+    fetchTotal();
+    // Polling: solo con la pestaña visible, y al volver a verla se refresca de inmediato
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') fetchTotal();
+    }, POLL_INTERVAL_MS);
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') fetchTotal();
+    };
+    document.addEventListener('visibilitychange', refreshOnVisible);
+
+    // Al cerrar o ocultar la pestaña, envía lo pendiente para no perder golpes
+    const sendPendingBeacon = () => {
+      if (document.visibilityState !== 'hidden' || unsentRef.current === 0) return;
+      const body = new Blob([JSON.stringify({ amount: unsentRef.current })], { type: 'application/json' });
+      if (navigator.sendBeacon('/api/forge-counter', body)) unsentRef.current = 0;
+    };
+    document.addEventListener('visibilitychange', sendPendingBeacon);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', sendPendingBeacon);
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+      window.clearInterval(pollId);
+      window.clearTimeout(flushTimerRef.current);
+    };
+  }, []);
 
   const thresholds = useMemo(
     () => (levelThresholds && levelThresholds.length === 6 ? levelThresholds : DEFAULT_LEVEL_THRESHOLDS),
@@ -151,34 +239,29 @@ export function HammerCounter({
 
     // Animación del martillo
     if (hammerRef.current) {
-      hammerRef.current.classList.remove('golpe');
+      hammerRef.current.classList.remove(CLS_GOLPE);
       void hammerRef.current.offsetWidth; // reinicia la animación en clics rápidos
-      hammerRef.current.classList.add('golpe');
+      hammerRef.current.classList.add(CLS_GOLPE);
     }
 
-    // Actualizar total y guardar
-    setTotal((prev) => {
-      const next = prev + currentPower;
-      try {
-        localStorage.setItem(storageKey, String(next));
-      } catch {
-        // En caso de modo incógnito o storage deshabilitado
-      }
-      return next;
-    });
+    // Acumular el golpe y programar el envío cuando pare de golpear
+    unsentRef.current += currentPower;
+    setUnsynced((u) => u + currentPower);
+    window.clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = window.setTimeout(() => flushRef.current(), FLUSH_DELAY_MS);
 
     // Destello de impacto en el contador total
     if (totalDisplayRef.current) {
-      totalDisplayRef.current.classList.remove('pop');
+      totalDisplayRef.current.classList.remove(CLS_POP_TOTAL);
       void totalDisplayRef.current.offsetWidth;
-      totalDisplayRef.current.classList.add('pop');
+      totalDisplayRef.current.classList.add(CLS_POP_TOTAL);
     }
 
     // Destello de impacto en la barra de progreso
     if (fillRef.current) {
-      fillRef.current.classList.remove('pop');
+      fillRef.current.classList.remove(CLS_POP_BAR);
       void fillRef.current.offsetWidth;
-      fillRef.current.classList.add('pop');
+      fillRef.current.classList.add(CLS_POP_BAR);
     }
 
     // Efecto visual de golpe en el botón
@@ -192,7 +275,7 @@ export function HammerCounter({
     // +X flotante con el poder del golpe
     if (overlayRef.current) {
       const mas = document.createElement('div');
-      mas.className = 'mas';
+      mas.className = CLS_MAS;
       mas.textContent = `+${formatHits(currentPower)}`;
       mas.style.left = `${x}px`;
       mas.style.top = `${y - 24}px`;
@@ -206,7 +289,7 @@ export function HammerCounter({
       if (!reduceMotion) {
         for (let i = 0; i < 6; i++) {
           const chispa = document.createElement('div');
-          chispa.className = 'chispa';
+          chispa.className = CLS_CHISPA;
           const angle = Math.random() * Math.PI * 2;
           const dist = 22 + Math.random() * 26;
           chispa.style.left = `${x}px`;
@@ -300,24 +383,15 @@ export function HammerCounter({
     }
   };
 
-  const handleReset = () => {
-    setTotal(0);
-    try {
-      localStorage.removeItem(storageKey);
-    } catch {
-      // Ignorar
-    }
-  };
-
   return (
     <>
       <section
-        className={`hammer-zone-v2 ${className}`}
+        className={`relative w-full max-w-200 flex-1 flex flex-col items-center px-4 py-2.5 text-center overflow-visible select-none touch-manipulation my-24 mx-auto [@media(hover:none)_and_(pointer:coarse)]:my-4 ${className}`}
         aria-label="Zona de forja con martillo"
       >
         <button
           ref={btnRef}
-          className="hammer-zone-v2__btn"
+          className="group inline-flex flex-col items-center justify-center gap-3 px-4 py-2 bg-transparent border-0 cursor-none mt-1 mx-auto transition-transform duration-75 ease-in-out [-webkit-tap-highlight-color:transparent] outline-none"
           type="button"
           aria-label={progress.isMax ? '¡Sigue golpeando!' : '¡Golpea!'}
           onKeyDown={handleButtonKeyDown}
@@ -325,14 +399,14 @@ export function HammerCounter({
           <img
             src="/assets/anvil.svg"
             alt="Yunque"
-            className="hammer-zone-v2__anvil"
+            className="w-[clamp(19vh,21vh,25vh)] h-auto aspect-square block select-none [-webkit-user-drag:none] pointer-events-none [filter:drop-shadow(0_10px_18px_rgba(0,0,0,0.7))_drop-shadow(0_0_12px_rgba(200,85,61,0.25))] transition-[filter,transform] duration-150 ease-in-out group-hover:[filter:drop-shadow(0_12px_22px_rgba(0,0,0,0.8))_drop-shadow(0_0_20px_rgba(242,183,5,0.5))] group-active:[filter:drop-shadow(0_4px_8px_rgba(0,0,0,0.8))_drop-shadow(0_0_26px_rgba(242,183,5,0.95))_brightness(1.2)] group-[.hit]:[filter:drop-shadow(0_4px_8px_rgba(0,0,0,0.8))_drop-shadow(0_0_26px_rgba(242,183,5,0.95))_brightness(1.2)]"
             draggable={false}
           />
         </button>
-        <div className="hammer-progress-v2">
+        <div className="w-full mb-1.5">
           {/* Barra de progreso */}
           <div
-            className="hammer-progress-v2__track"
+            className="relative flex items-center justify-start w-full h-1.5 mb-4.5 overflow-visible rounded-full border border-white/14 bg-black/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
             role="progressbar"
             aria-valuenow={Math.round(progress.progressPercent)}
             aria-valuemin={0}
@@ -341,7 +415,7 @@ export function HammerCounter({
           >
             <div
               ref={fillRef}
-              className="hammer-progress-v2__fill"
+              className="relative h-full rounded-full bg-[linear-gradient(90deg,#c8553d_0%,#e56a4e_50%,#f2b705_100%)] shadow-[0_0_14px_rgba(242,183,5,0.6)] transition-[width] duration-150 ease-out"
               style={{ width: `${progress.progressPercent}%` }}
             >
               <FireFlame particleQty={50} />
@@ -350,8 +424,8 @@ export function HammerCounter({
               {progress.isMax ? '100%' : `${Math.round(progress.progressPercent)}%`}
             </span> */}
           </div>
-          <div className="hammer-total-badge-v2" title={`Total acumulado: ${total.toLocaleString()} golpes`}>
-            <span ref={totalDisplayRef} className="hammer-total-badge-v2__value">
+          <div className="inline-flex items-center gap-1.5 w-auto mb-4 px-2.5 py-1 text-[0.82rem] rounded-full border border-white/12 bg-white/5 shadow-[0_2px_6px_rgba(0,0,0,0.2)]" title={`Total acumulado: ${total.toLocaleString()} golpes`}>
+            <span ref={totalDisplayRef} className="inline-block font-extrabold tabular-nums text-gold [text-shadow:0_0_8px_rgba(242,183,5,0.4)] transition-transform duration-100">
               {formatHits(total)} Golpes al yunque
             </span>
           </div>
@@ -359,16 +433,8 @@ export function HammerCounter({
 
 
 
-        <p className="hammer-zone-v2__hint"></p>
+        <p className="mt-[25px] mb-0 text-[0.82rem] text-muted opacity-75"></p>
 
-        {/* <button
-          ref={resetRef}
-          className="hammer-zone__reset"
-          type="button"
-          onClick={handleReset}
-        >
-          Reiniciar progreso
-        </button> */}
 
       </section>
 
@@ -380,7 +446,7 @@ export function HammerCounter({
               ref={hammerRef}
               src={`/assets/hammer/h${Math.min(6, Math.max(1, progress.level))}.svg`}
             />
-            <div ref={overlayRef} className="hammer-effects-overlay" aria-hidden="true" />
+            <div ref={overlayRef} className="fixed inset-0 pointer-events-none z-9998 overflow-hidden" aria-hidden="true" />
           </>,
           document.body
         )}
