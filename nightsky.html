@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cielo nocturno</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05070f; overflow: hidden; }
+  #bg-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<script>
+(function () {
+  var canvas = document.getElementById('bg-canvas');
+  var context = canvas.getContext('2d');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var width, height, pixelRatio;
+  var stars = [];
+
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  // Sprite con degradado radial: se dibuja una vez y se reutiliza para todas las estrellas
+  function createStarSprite(rgbColor) {
+    var spriteCanvas = document.createElement('canvas');
+    spriteCanvas.width = spriteCanvas.height = 64;
+    var spriteContext = spriteCanvas.getContext('2d');
+    var gradient = spriteContext.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(' + rgbColor + ',1)');
+    gradient.addColorStop(0.15, 'rgba(' + rgbColor + ',.7)');
+    gradient.addColorStop(0.4, 'rgba(' + rgbColor + ',.15)');
+    gradient.addColorStop(1, 'rgba(' + rgbColor + ',0)');
+    spriteContext.fillStyle = gradient;
+    spriteContext.fillRect(0, 0, 64, 64);
+    return spriteCanvas;
+  }
+
+  var whiteStar = createStarSprite('255,255,255');
+  var blueStar = createStarSprite('170,200,255');
+  var yellowStar = createStarSprite('255,235,180');
+
+  function createStar() {
+    var brightnessLevel = Math.pow(Math.random(), 2.5);
+    var colorRoll = Math.random();
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      size: 2 + brightnessLevel * 9,                // tamaño visible
+      maxBrightness: 0.25 + brightnessLevel * 0.75, // brillo máximo (0.25 a 1)
+      twinkleDepth: randomBetween(0.3, 0.8),        // cuánto baja el brillo al titilar
+      twinkleSpeed: randomBetween(0.6, 2.2),        // velocidad del titileo
+      twinklePhase: randomBetween(0, Math.PI * 2),  // para que no titilen todas a la vez
+      sprite: colorRoll < 0.65 ? whiteStar : (colorRoll < 0.85 ? blueStar : yellowStar)
+    };
+  }
+
+  function resizeCanvas() {
+    pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    var starCount = Math.round(Math.max(80, Math.min(400, (width * height) / 4500)));
+    stars = [];
+    for (var i = 0; i < starCount; i++) stars.push(createStar());
+  }
+
+  function drawFrame(timestamp) {
+    var seconds = timestamp / 1000;
+
+    // Fondo: degradado del azul muy oscuro al azul noche
+    var sky = context.createLinearGradient(0, 0, 0, height);
+    sky.addColorStop(0, '#02030a');
+    sky.addColorStop(0.7, '#070b1c');
+    sky.addColorStop(1, '#0d1230');
+    context.globalCompositeOperation = 'source-over';
+    context.globalAlpha = 1;
+    context.fillStyle = sky;
+    context.fillRect(0, 0, width, height);
+
+    context.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < stars.length; i++) {
+      var star = stars[i];
+      // Oscilación suave entre (1 - twinkleDepth) y 1 del brillo máximo
+      var wave = 0.5 + 0.5 * Math.sin(seconds * star.twinkleSpeed + star.twinklePhase);
+      var twinkle = 1 - star.twinkleDepth * wave;
+      var alpha = prefersReducedMotion ? star.maxBrightness : star.maxBrightness * twinkle;
+      var size = star.size * (0.9 + 0.1 * twinkle);
+
+      context.globalAlpha = alpha;
+      context.drawImage(star.sprite, star.x - size, star.y - size, size * 2, size * 2);
+    }
+    context.globalAlpha = 1;
+
+    if (!prefersReducedMotion) requestAnimationFrame(drawFrame);
+  }
+
+  window.addEventListener('resize', function () {
+    resizeCanvas();
+    if (prefersReducedMotion) drawFrame(0);
+  });
+
+  resizeCanvas();
+  requestAnimationFrame(drawFrame);
+})();
+</script>
+</body>
+</html>

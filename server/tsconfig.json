@@ -6,7 +6,9 @@
     "moduleResolution": "NodeNext",
     "types": ["node"],
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
   },
   "include": ["src"]
 }

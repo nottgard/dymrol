@@ -1,39 +1,177 @@
-:root {
-  color-scheme: dark;
-  --bg: #070b1c;
-  --text: #d9dde2;
-  --muted: #8d949d;
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
+@import url('https://fonts.googleapis.com/css2?family=New+Rocker&family=Germania+One&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap');
+@import 'tailwindcss';
 
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
-}
+@theme {
+  --color-bg: #070b1c;
+  --color-text: #d9dde2;
+  --color-muted: #8d949d;
+  --color-gold: #f2b705;
+  --color-brick: #c8553d;
+  --color-ember: #e56a4e;
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  background: var(--bg);
-}
+  --font-rocker: 'New Rocker', Georgia, 'Times New Roman', serif;
+  --font-germania: 'Germania One', Georgia, 'Times New Roman', serif;
+  --font-cormorant: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
-body {
-  font-family: system-ui, sans-serif;
-  color: var(--text);
-}
+  --animate-emerge: emerge 3.2s ease-out both;
+  --animate-logo: emerge 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) both, float 5s ease-in-out 1.5s infinite;
+  --animate-flicker: flicker 2.4s infinite;
+  --animate-step-pulse: step-pulse 1.8s infinite;
+  --animate-pop-total: pop-total 0.16s ease-out;
+  --animate-bar-glow: bar-glow 0.18s ease-out;
+  --animate-golpe: golpe 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+  --animate-sube: sube 0.8s ease-out forwards;
+  --animate-chispa: chispa 0.45s ease-out forwards;
 
-/* Animación compartida por varios componentes */
-@keyframes emerge {
-  from {
-    opacity: 0;
-    filter: blur(8px);
+  @keyframes emerge {
+    from {
+      opacity: 0;
+      filter: blur(8px);
+    }
+    to {
+      opacity: 1;
+      filter: none;
+    }
   }
-  to {
-    opacity: 1;
-    filter: none;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateX(0) rotate(-1deg);
+    }
+    50% {
+      transform: translateX(-5px) rotate(1deg);
+    }
+  }
+
+  @keyframes flicker {
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    12% {
+      opacity: 1;
+    }
+    27% {
+      opacity: 0.78;
+    }
+    41% {
+      opacity: 0.95;
+    }
+    63% {
+      opacity: 0.8;
+    }
+    78% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 0.88;
+    }
+  }
+
+  @keyframes step-pulse {
+    0%,
+    100% {
+      border-color: #c8553d;
+      box-shadow: 0 0 6px rgba(200, 85, 61, 0.3);
+    }
+    50% {
+      border-color: #f2b705;
+      box-shadow: 0 0 12px rgba(242, 183, 5, 0.6);
+    }
+  }
+
+  @keyframes pop-total {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      color: #fff;
+      text-shadow: 0 0 12px #f2b705;
+    }
+  }
+
+  @keyframes bar-glow {
+    0%,
+    100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.6) drop-shadow(0 0 8px #f2b705);
+    }
+  }
+
+  @keyframes golpe {
+    0%,
+    100% {
+      transform: rotate(32deg);
+    }
+    40% {
+      transform: rotate(-34deg);
+    }
+    55% {
+      transform: rotate(-30deg);
+    }
+  }
+
+  @keyframes sube {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 0) scale(0.6);
+    }
+    15% {
+      opacity: 1;
+      transform: translate(-50%, -14px) scale(1.15);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -80px) scale(1);
+    }
+  }
+
+  @keyframes chispa {
+    to {
+      opacity: 0;
+      transform: translate(var(--dx), var(--dy)) scale(0.3);
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    /* Alias para el CSS legado que aún usa var(--text) / var(--muted) / var(--bg) */
+    --bg: var(--color-bg);
+    --text: var(--color-text);
+    --muted: var(--color-muted);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    background: var(--color-bg);
+  }
+
+  body {
+    font-family: system-ui, sans-serif;
+    color: var(--color-text);
+  }
+}
+
+/* Reduced motion: se anulan las animaciones decorativas redefiniendo sus tokens */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animate-emerge: none;
+    --animate-flicker: none;
+    --animate-step-pulse: none;
+    --animate-pop-total: none;
+    --animate-bar-glow: none;
+    --animate-golpe: none;
+    --animate-chispa: none;
+    --animate-sube: sube 0.01s ease-out forwards;
   }
 }

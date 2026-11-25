@@ -22,7 +22,7 @@ Internet ──► Caddy (80/443, HTTPS automático) ──► Node/Express (127
 
 1. Apuntar el dominio al VPS (paso 1). Hazlo el primero porque la propagación puede tardar de minutos a unas horas, y mientras tanto sigues con el resto.
 2. Preparar el servidor (pasos 2 a 4).
-3. Subir el código y arrancarlo (pasos 5 a 8), y crear la base de datos (paso 9).
+3. Subir el código y compilarlo (pasos 5 y 6), crear la base de datos y aplicar las migraciones (paso 7), y arrancarlo como servicio (pasos 8 y 9).
 4. Poner Caddy delante (paso 10).
 5. Probar que sobrevive a reinicios y caídas (paso 12).
 
@@ -202,17 +202,126 @@ Esto genera `client/dist` (el front) y `server/dist` (el servidor compilado).
 > Si el VPS tiene poca RAM (512 MB) y el build se queda sin memoria, crea un swap de 1 GB:
 > `sudo fallocate -l 1G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
 
-Prueba rápida a mano (cancela con `Ctrl+C` cuando veas que funciona):
+---
+
+## 7. Base de datos PostgreSQL
+
+El proyecto usa PostgreSQL para guardar el contador global de golpes (tabla `forge_counter`). PostgreSQL se instala en el mismo VPS y **solo acepta conexiones locales**: no se expone a internet.
+
+### 7.1. Instalar
 
 ```bash
+sudo apt install -y postgresql
+sudo systemctl is-enabled postgresql    # debe decir "enabled" (arranca con el sistema)
+sudo systemctl status postgresql
+psql --version                          # Ubuntu 24.04 trae la 16
+```
+
+Comprueba que solo escucha en local y **no abras el puerto 5432 en el firewall**:
+
+```bash
+sudo ss -tlnp | grep 5432               # debe mostrar 127.0.0.1:5432
+```
+
+### 7.2. Crear usuario y base de datos
+
+Genera una contraseña aleatoria (solo caracteres hexadecimales, para que no dé problemas dentro de una URL) y guárdala en tu gestor de contraseñas:
+
+```bash
+openssl rand -hex 24
+```
+
+Entra en la consola de Postgres y crea el usuario y la base de datos, sustituyendo `LA_CONTRASEÑA` por la generada:
+
+```bash
+sudo -u postgres psql
+```
+
+```sql
+CREATE ROLE dym_app WITH LOGIN PASSWORD 'LA_CONTRASEÑA';
+CREATE DATABASE dym OWNER dym_app;
+\q
+```
+
+Comprueba que se puede conectar con ese usuario:
+
+```bash
+psql "postgresql://dym_app:LA_CONTRASEÑA@localhost:5432/dym" -c '\conninfo'
+```
+
+### 7.3. Pasarle la conexión a la aplicación
+
+La cadena de conexión es un secreto: va en un fichero fuera del repositorio, legible solo por el usuario que ejecuta la app.
+
+```bash
+sudo nano /etc/dym.env
+```
+
+```
+DATABASE_URL=postgresql://dym_app:LA_CONTRASEÑA@localhost:5432/dym
+```
+
+```bash
+sudo chown root:deploy /etc/dym.env
+sudo chmod 640 /etc/dym.env
+```
+
+El servicio que crearás en el paso 8 cargará ese fichero (`EnvironmentFile`), así que la app recibirá `process.env.DATABASE_URL`. Además, `After=postgresql.service` hace que al arrancar el VPS primero suba la base de datos y después la app.
+
+### 7.4. Crear las tablas y los datos (migraciones)
+
+El esquema y los datos iniciales se crean con migraciones (carpeta `server/migrations/`). La app se conecta con TypeORM (`server/src/data-source.ts`, que lee `DATABASE_URL`) y arranca la conexión al iniciar: **si la base de datos no está accesible, el servicio no arranca**; por eso este paso va antes de crear el servicio. TypeORM no crea tablas (`synchronize: false`); el esquema lo crean solo las migraciones. Con el código ya clonado y compilado (paso 6) y la `DATABASE_URL` configurada (paso 7.3), aplica las migraciones cargando las variables del fichero:
+
+```bash
+cd ~/dym
+set -a; source /etc/dym.env; set +a
+pnpm migrate
+```
+
+Esto crea la tabla `forge_counter` y su fila inicial (`smashes = 0`). Si ya están aplicadas, dirá `No migrations to run!`. En cada actualización se ejecutan solas desde `deploy.sh` (paso 13).
+
+Para trabajar en tu ordenador necesitas tu propio Postgres local con una base de datos de desarrollo (por ejemplo con `brew install postgresql@16`, o con Docker: `docker run -d --name dym-db -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=dym -p 5432:5432 postgres:16`). No uses la base de datos del VPS desde tu ordenador.
+
+Prueba rápida a mano (cancela con `Ctrl+C` cuando veas que funciona). Se hace aquí y no antes porque la app necesita la base de datos para arrancar:
+
+```bash
+set -a; source /etc/dym.env; set +a
 NODE_ENV=production PORT=3001 node server/dist/index.js
 ```
 
 En otra terminal del VPS: `curl -s localhost:3001/api/hello` debe devolver el JSON con el mensaje.
 
+### 7.5. Copias de seguridad diarias
+
+Un VPS puede perderse o corromperse; sin copias, perderías los datos. Crea una copia diaria comprimida y conserva las de los últimos 14 días:
+
+```bash
+sudo mkdir -p /var/backups/dym
+sudo chown postgres:postgres /var/backups/dym
+sudo nano /etc/cron.d/dym-backup
+```
+
+```
+0 3 * * * postgres pg_dump dym | gzip > /var/backups/dym/dym-$(date +\%F).sql.gz && find /var/backups/dym -name 'dym-*.sql.gz' -mtime +14 -delete
+```
+
+Prueba que funciona sin esperar a las 3:00:
+
+```bash
+sudo -u postgres bash -c 'pg_dump dym | gzip > /var/backups/dym/prueba.sql.gz' && ls -lh /var/backups/dym
+```
+
+Para restaurar una copia en una base de datos vacía:
+
+```bash
+gunzip -c /var/backups/dym/dym-AAAA-MM-DD.sql.gz | sudo -u postgres psql dym
+```
+
+> Las copias están en el mismo disco que la base de datos. Cópialas de vez en cuando fuera del VPS (a tu ordenador con `scp`/`rsync`, o a un almacenamiento externo), o activa los snapshots/backups de tu proveedor.
+
 ---
 
-## 7. Servicio systemd (arranque automático y reinicio ante fallos)
+## 8. Servicio systemd (arranque automático y reinicio ante fallos)
 
 Crea el fichero del servicio:
 
@@ -232,7 +341,7 @@ User=deploy
 WorkingDirectory=/home/deploy/dym
 Environment=NODE_ENV=production
 Environment=PORT=3001
-# Variables secretas (DATABASE_URL...). El "-" evita error si el fichero aún no existe (se crea en el paso 9)
+# Variables secretas (DATABASE_URL...). El "-" evita error si el fichero aún no existe (se crea en el paso 7.3)
 EnvironmentFile=-/etc/dym.env
 ExecStart=/usr/bin/node server/dist/index.js
 
@@ -263,7 +372,7 @@ Ver los logs en directo: `journalctl -u dym -f`
 
 ---
 
-## 8. Permitir reiniciar el servicio sin contraseña (para las actualizaciones)
+## 9. Permitir reiniciar el servicio sin contraseña (para las actualizaciones)
 
 Para que el script de actualización pueda reiniciar el servicio sin pedir la contraseña de `sudo`:
 
@@ -274,115 +383,6 @@ sudo visudo -f /etc/sudoers.d/deploy
 ```
 deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart dym
 ```
-
----
-
-## 9. Base de datos PostgreSQL
-
-El proyecto todavía no usa base de datos, pero así queda lista. PostgreSQL se instala en el mismo VPS y **solo acepta conexiones locales**: no se expone a internet.
-
-### 9.1. Instalar
-
-```bash
-sudo apt install -y postgresql
-sudo systemctl is-enabled postgresql    # debe decir "enabled" (arranca con el sistema)
-sudo systemctl status postgresql
-psql --version                          # Ubuntu 24.04 trae la 16
-```
-
-Comprueba que solo escucha en local y **no abras el puerto 5432 en el firewall**:
-
-```bash
-sudo ss -tlnp | grep 5432               # debe mostrar 127.0.0.1:5432
-```
-
-### 9.2. Crear usuario y base de datos
-
-Genera una contraseña aleatoria (solo caracteres hexadecimales, para que no dé problemas dentro de una URL) y guárdala en tu gestor de contraseñas:
-
-```bash
-openssl rand -hex 24
-```
-
-Entra en la consola de Postgres y crea el usuario y la base de datos, sustituyendo `LA_CONTRASEÑA` por la generada:
-
-```bash
-sudo -u postgres psql
-```
-
-```sql
-CREATE ROLE dym_app WITH LOGIN PASSWORD 'LA_CONTRASEÑA';
-CREATE DATABASE dym OWNER dym_app;
-\q
-```
-
-Comprueba que se puede conectar con ese usuario:
-
-```bash
-psql "postgresql://dym_app:LA_CONTRASEÑA@localhost:5432/dym" -c '\conninfo'
-```
-
-### 9.3. Pasarle la conexión a la aplicación
-
-La cadena de conexión es un secreto: va en un fichero fuera del repositorio, legible solo por el usuario que ejecuta la app.
-
-```bash
-sudo nano /etc/dym.env
-```
-
-```
-DATABASE_URL=postgresql://dym_app:LA_CONTRASEÑA@localhost:5432/dym
-```
-
-```bash
-sudo chown root:deploy /etc/dym.env
-sudo chmod 640 /etc/dym.env
-sudo systemctl restart dym
-```
-
-El servicio del paso 7 ya carga ese fichero (`EnvironmentFile`), así que la app recibe `process.env.DATABASE_URL`. Además, `After=postgresql.service` hace que al arrancar el VPS primero suba la base de datos y después la app.
-
-### 9.4. Crear las tablas y los datos (migraciones)
-
-El esquema y los datos iniciales se crean con migraciones (carpeta `server/migrations/`). El driver `pg` y `server/src/db.ts` ya vienen en el proyecto. Con el código ya clonado y compilado (paso 6) y la `DATABASE_URL` configurada (paso 9.3), aplica las migraciones cargando las variables del fichero:
-
-```bash
-cd ~/dym
-set -a; source /etc/dym.env; set +a
-pnpm migrate
-```
-
-Si no hay migraciones todavía, dirá `No migrations to run!`. En cada actualización se ejecutan solas desde `deploy.sh` (paso 13).
-
-Para trabajar en tu ordenador necesitas tu propio Postgres local con una base de datos de desarrollo (por ejemplo con `brew install postgresql@16`, o con Docker: `docker run -d --name dym-db -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=dym -p 5432:5432 postgres:16`). No uses la base de datos del VPS desde tu ordenador.
-
-### 9.5. Copias de seguridad diarias
-
-Un VPS puede perderse o corromperse; sin copias, perderías los datos. Crea una copia diaria comprimida y conserva las de los últimos 14 días:
-
-```bash
-sudo mkdir -p /var/backups/dym
-sudo chown postgres:postgres /var/backups/dym
-sudo nano /etc/cron.d/dym-backup
-```
-
-```
-0 3 * * * postgres pg_dump dym | gzip > /var/backups/dym/dym-$(date +\%F).sql.gz && find /var/backups/dym -name 'dym-*.sql.gz' -mtime +14 -delete
-```
-
-Prueba que funciona sin esperar a las 3:00:
-
-```bash
-sudo -u postgres bash -c 'pg_dump dym | gzip > /var/backups/dym/prueba.sql.gz' && ls -lh /var/backups/dym
-```
-
-Para restaurar una copia en una base de datos vacía:
-
-```bash
-gunzip -c /var/backups/dym/dym-AAAA-MM-DD.sql.gz | sudo -u postgres psql dym
-```
-
-> Las copias están en el mismo disco que la base de datos. Cópialas de vez en cuando fuera del VPS (a tu ordenador con `scp`/`rsync`, o a un almacenamiento externo), o activa los snapshots/backups de tu proveedor.
 
 ---
 
