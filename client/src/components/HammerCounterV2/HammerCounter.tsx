@@ -2,9 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, t
 import { createPortal } from 'react-dom';
 import HammerCursor from './HammerCursor.tsx';
 import { useHammerSound } from './useHammerSound.ts';
-import './HammerCounter.css';
 import { FireFlame } from '../FireFlame/FireFlame.tsx';
 import { api } from '../../api/client.ts';
+
+// Clases que se añaden/quitan desde JS para reiniciar animaciones (deben ser strings literales para que Tailwind las detecte)
+const CLS_GOLPE = 'golpe';
+const CLS_POP_TOTAL = 'animate-pop-total';
+const CLS_POP_BAR = 'animate-bar-glow';
+const CLS_MAS =
+  'fixed pointer-events-none font-extrabold text-2xl text-ember [text-shadow:0_1px_2px_rgba(0,0,0,0.8),0_0_10px_rgba(229,106,78,0.5)] animate-sube';
+const CLS_CHISPA =
+  'fixed pointer-events-none size-1.5 rounded-full bg-gold shadow-[0_0_8px_#f2b705] animate-chispa';
 
 /**
  * Estos 6 números deciden el límite de golpes de cada nivel.
@@ -231,9 +239,9 @@ export function HammerCounter({
 
     // Animación del martillo
     if (hammerRef.current) {
-      hammerRef.current.classList.remove('golpe');
+      hammerRef.current.classList.remove(CLS_GOLPE);
       void hammerRef.current.offsetWidth; // reinicia la animación en clics rápidos
-      hammerRef.current.classList.add('golpe');
+      hammerRef.current.classList.add(CLS_GOLPE);
     }
 
     // Acumular el golpe y programar el envío cuando pare de golpear
@@ -244,16 +252,16 @@ export function HammerCounter({
 
     // Destello de impacto en el contador total
     if (totalDisplayRef.current) {
-      totalDisplayRef.current.classList.remove('pop');
+      totalDisplayRef.current.classList.remove(CLS_POP_TOTAL);
       void totalDisplayRef.current.offsetWidth;
-      totalDisplayRef.current.classList.add('pop');
+      totalDisplayRef.current.classList.add(CLS_POP_TOTAL);
     }
 
     // Destello de impacto en la barra de progreso
     if (fillRef.current) {
-      fillRef.current.classList.remove('pop');
+      fillRef.current.classList.remove(CLS_POP_BAR);
       void fillRef.current.offsetWidth;
-      fillRef.current.classList.add('pop');
+      fillRef.current.classList.add(CLS_POP_BAR);
     }
 
     // Efecto visual de golpe en el botón
@@ -267,7 +275,7 @@ export function HammerCounter({
     // +X flotante con el poder del golpe
     if (overlayRef.current) {
       const mas = document.createElement('div');
-      mas.className = 'mas';
+      mas.className = CLS_MAS;
       mas.textContent = `+${formatHits(currentPower)}`;
       mas.style.left = `${x}px`;
       mas.style.top = `${y - 24}px`;
@@ -281,7 +289,7 @@ export function HammerCounter({
       if (!reduceMotion) {
         for (let i = 0; i < 6; i++) {
           const chispa = document.createElement('div');
-          chispa.className = 'chispa';
+          chispa.className = CLS_CHISPA;
           const angle = Math.random() * Math.PI * 2;
           const dist = 22 + Math.random() * 26;
           chispa.style.left = `${x}px`;
@@ -378,12 +386,12 @@ export function HammerCounter({
   return (
     <>
       <section
-        className={`hammer-zone-v2 ${className}`}
+        className={`relative w-full max-w-200 flex-1 flex flex-col items-center px-4 py-2.5 text-center overflow-visible select-none touch-manipulation my-24 mx-auto [@media(hover:none)_and_(pointer:coarse)]:my-4 ${className}`}
         aria-label="Zona de forja con martillo"
       >
         <button
           ref={btnRef}
-          className="hammer-zone-v2__btn"
+          className="group inline-flex flex-col items-center justify-center gap-3 px-4 py-2 bg-transparent border-0 cursor-none mt-1 mx-auto transition-transform duration-75 ease-in-out [-webkit-tap-highlight-color:transparent] outline-none"
           type="button"
           aria-label={progress.isMax ? '¡Sigue golpeando!' : '¡Golpea!'}
           onKeyDown={handleButtonKeyDown}
@@ -391,14 +399,14 @@ export function HammerCounter({
           <img
             src="/assets/anvil.svg"
             alt="Yunque"
-            className="hammer-zone-v2__anvil"
+            className="w-[clamp(19vh,21vh,25vh)] h-auto aspect-square block select-none [-webkit-user-drag:none] pointer-events-none [filter:drop-shadow(0_10px_18px_rgba(0,0,0,0.7))_drop-shadow(0_0_12px_rgba(200,85,61,0.25))] transition-[filter,transform] duration-150 ease-in-out group-hover:[filter:drop-shadow(0_12px_22px_rgba(0,0,0,0.8))_drop-shadow(0_0_20px_rgba(242,183,5,0.5))] group-active:[filter:drop-shadow(0_4px_8px_rgba(0,0,0,0.8))_drop-shadow(0_0_26px_rgba(242,183,5,0.95))_brightness(1.2)] group-[.hit]:[filter:drop-shadow(0_4px_8px_rgba(0,0,0,0.8))_drop-shadow(0_0_26px_rgba(242,183,5,0.95))_brightness(1.2)]"
             draggable={false}
           />
         </button>
-        <div className="hammer-progress-v2">
+        <div className="w-full mb-1.5">
           {/* Barra de progreso */}
           <div
-            className="hammer-progress-v2__track"
+            className="relative flex items-center justify-start w-full h-1.5 mb-4.5 overflow-visible rounded-full border border-white/14 bg-black/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
             role="progressbar"
             aria-valuenow={Math.round(progress.progressPercent)}
             aria-valuemin={0}
@@ -407,7 +415,7 @@ export function HammerCounter({
           >
             <div
               ref={fillRef}
-              className="hammer-progress-v2__fill"
+              className="relative h-full rounded-full bg-[linear-gradient(90deg,#c8553d_0%,#e56a4e_50%,#f2b705_100%)] shadow-[0_0_14px_rgba(242,183,5,0.6)] transition-[width] duration-150 ease-out"
               style={{ width: `${progress.progressPercent}%` }}
             >
               <FireFlame particleQty={50} />
@@ -416,8 +424,8 @@ export function HammerCounter({
               {progress.isMax ? '100%' : `${Math.round(progress.progressPercent)}%`}
             </span> */}
           </div>
-          <div className="hammer-total-badge-v2" title={`Total acumulado: ${total.toLocaleString()} golpes`}>
-            <span ref={totalDisplayRef} className="hammer-total-badge-v2__value">
+          <div className="inline-flex items-center gap-1.5 w-auto mb-4 px-2.5 py-1 text-[0.82rem] rounded-full border border-white/12 bg-white/5 shadow-[0_2px_6px_rgba(0,0,0,0.2)]" title={`Total acumulado: ${total.toLocaleString()} golpes`}>
+            <span ref={totalDisplayRef} className="inline-block font-extrabold tabular-nums text-gold [text-shadow:0_0_8px_rgba(242,183,5,0.4)] transition-transform duration-100">
               {formatHits(total)} Golpes al yunque
             </span>
           </div>
@@ -425,7 +433,7 @@ export function HammerCounter({
 
 
 
-        <p className="hammer-zone-v2__hint"></p>
+        <p className="mt-[25px] mb-0 text-[0.82rem] text-muted opacity-75"></p>
 
 
       </section>
@@ -438,7 +446,7 @@ export function HammerCounter({
               ref={hammerRef}
               src={`/assets/hammer/h${Math.min(6, Math.max(1, progress.level))}.svg`}
             />
-            <div ref={overlayRef} className="hammer-effects-overlay" aria-hidden="true" />
+            <div ref={overlayRef} className="fixed inset-0 pointer-events-none z-9998 overflow-hidden" aria-hidden="true" />
           </>,
           document.body
         )}
