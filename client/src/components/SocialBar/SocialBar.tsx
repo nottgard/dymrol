@@ -4,7 +4,7 @@ import { socialLinks } from './socialLinks.ts';
 export default function SocialBar() {
   return (
     <nav
-      className="fixed z-2 inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] py-2.5 pointer-events-none"
+      className="fixed z-2 inset-x-0 bottom-[calc(2.5rem+env(safe-area-inset-bottom,0px))] py-2.5 pointer-events-none"
       aria-label="Redes sociales"
     >
       <ul className="list-none m-auto p-0 flex flex-wrap justify-center gap-x-2 gap-y-1 max-w-160">
@@ -25,6 +25,9 @@ export default function SocialBar() {
             </a>
           </li>
         ))}
+      </ul>
+      <ul className="list-none mt-5 ml-auto mr-auto mb-auto p-0 flex flex-wrap justify-center gap-x-2 gap-y-1 max-w-160">
+        <li><a href="/politica-de-privacidad" className="pointer-events-auto underline underline-offset-6">Política de privacidad</a></li>
       </ul>
     </nav>
   );

@@ -322,40 +322,41 @@ export function HammerCounter({
   golpearRef.current = golpear;
 
   useEffect(() => {
+    const hideHammer = () => {
+      if (hammerRef.current) hammerRef.current.style.display = 'none';
+    };
+
+    /**
+     * Determina si el cursor debe ocultar el martillo en la posición (x, y).
+     * Excepciones: el logo
+     */
+    const isOverInteractive = (x: number, y: number): boolean => {
+      const el = document.elementFromPoint(x, y) as HTMLElement | null;
+      if (!el) return false;
+      return !!(
+        (el.closest('a') && !el.closest('.logo')) ||
+        (el.closest('button') && !el.closest('.anvil-button')) ||
+        el.closest('.socials') ||
+        el.closest('.sound-button')
+      );
+    };
+
     const handleGlobalPointerMove = (e: globalThis.PointerEvent) => {
-      if (e.pointerType === 'mouse') {
-        const target = e.target as HTMLElement | null;
-        // Si el puntero está sobre enlaces sociales o el botón de sonido, ocultar el martillo para no pisarlos
-        if (target?.closest('.socials') || target?.closest('.sound')) {
-          if (hammerRef.current) {
-            hammerRef.current.style.display = 'none';
-          }
-          return;
-        }
-        mover(e.clientX, e.clientY);
+      if (e.pointerType !== 'mouse') return;
+      if (isOverInteractive(e.clientX, e.clientY)) {
+        hideHammer();
+        return;
       }
+      mover(e.clientX, e.clientY);
     };
 
     const handleGlobalPointerLeave = () => {
-      if (hammerRef.current) {
-        hammerRef.current.style.display = 'none';
-      }
+      hideHammer();
     };
 
     const handleGlobalPointerDown = (e: globalThis.PointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-
-      const target = e.target as HTMLElement | null;
-      // No golpear si se hace clic en elementos interactivos como redes sociales, botón de sonido o reset
-      if (
-        target?.closest('a') ||
-        target?.closest('.socials') ||
-        target?.closest('.sound') ||
-        target?.closest('button:not(.hammer-zone-v2__btn)') ||
-        target === resetRef.current
-      ) {
-        return;
-      }
+      if (isOverInteractive(e.clientX, e.clientY)) return;
 
       golpearRef.current(e.clientX, e.clientY, e.pointerType !== 'mouse');
     };
@@ -368,9 +369,7 @@ export function HammerCounter({
       window.removeEventListener('pointermove', handleGlobalPointerMove);
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       document.removeEventListener('mouseleave', handleGlobalPointerLeave);
-      if (hammerRef.current) {
-        hammerRef.current.style.display = 'none';
-      }
+      hideHammer();
     };
   }, []);
 
@@ -391,7 +390,7 @@ export function HammerCounter({
       >
         <button
           ref={btnRef}
-          className="group inline-flex flex-col items-center justify-center gap-3 px-4 py-2 bg-transparent border-0 cursor-none mt-1 mx-auto transition-transform duration-75 ease-in-out [-webkit-tap-highlight-color:transparent] outline-none"
+          className="anvil-button group inline-flex flex-col items-center justify-center gap-3 px-4 py-2 bg-transparent border-0 cursor-none mt-1 mx-auto transition-transform duration-75 ease-in-out [-webkit-tap-highlight-color:transparent] outline-none"
           type="button"
           aria-label={progress.isMax ? '¡Sigue golpeando!' : '¡Golpea!'}
           onKeyDown={handleButtonKeyDown}
