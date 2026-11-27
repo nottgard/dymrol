@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"pnpm --filter server dev\" \"pnpm --filter client dev\"",
     "build": "pnpm -r build",
-    "start": "pnpm --filter server start",
+    "start": "pnpm build && pnpm --filter server start",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

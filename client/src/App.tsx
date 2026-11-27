@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Privacidad from './pages/Privacidad/Privacidad.tsx';
+import Login from './pages/Login/Login.tsx';
+import Admin from './pages/Admin/Admin.tsx';
+import RequireAuth from './auth/RequireAuth.tsx';
 import Home from './pages/Home/Home.tsx';
 
 export default function App() {
@@ -8,6 +11,10 @@ export default function App() {
       <Route index element={<Home />} />
       {/* Añade aquí tus nuevas secciones: <Route path="about" element={<About />} /> */}
       <Route path="politica-de-privacidad" element={<Privacidad />} />  
+      <Route path="login" element={<Login />} />
+      <Route element={<RequireAuth />}>
+        <Route path="la-pecera" element={<Admin />} />
+      </Route>
       {/* Cualquier ruta que no exista va a la home (por ahora no hay 404) */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
