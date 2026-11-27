@@ -3,7 +3,7 @@ import Logo from '../../components/Logo/Logo.tsx';
 
 export default function Privacidad() {
     return (<>
-    <main className="relative z-1 w-full min-h-full flex flex-col items-center justify-between gap-[clamp(0.5rem,1.5vh,1.25rem)] pt-[clamp(0.75rem,2vh,1.5rem)] px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] text-center select-none animate-emerge">
+    <main className="relative z-1 w-full min-h-full flex flex-col items-center justify-between gap-[clamp(0.5rem,1.5vh,1.25rem)] pt-[clamp(0.75rem,2vh,1.5rem)] px-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] text-center select-none">
     <Logo />
     <div className='grid grid-cols-1 ml-10 mr-10 mt-10'>
     <div className='text-justify'>
@@ -13,7 +13,7 @@ export default function Privacidad() {
     </div>
     </div>
     </main>
-    <SocialBar />
+    
     </>
     )
 }

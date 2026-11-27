@@ -38,11 +38,11 @@ export default function Login() {
   return (
     <main className="min-h-full flex items-center justify-center px-6">
       <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-4">
-        <h1 className="text-3xl text-gold text-center">Acceso</h1>
+        <h1 className="text-3xl text-sky-500 text-center">Acceso</h1>
         <input className={input} placeholder="Usuario" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
         <input className={input} type="password" placeholder="Contraseña" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         {error && <p role="alert" className="text-ember text-sm text-center">{error}</p>}
-        <button disabled={busy} className="rounded bg-gold px-3 py-2 font-bold text-bg disabled:opacity-60 cursor-pointer">
+        <button disabled={busy} className="rounded bg-sky-500 px-3 py-2 font-bold text-bg disabled:opacity-60 cursor-pointer">
           {busy ? 'Entrando…' : 'Entrar'}
         </button>
       </form>

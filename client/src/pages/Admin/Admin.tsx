@@ -22,7 +22,7 @@ export default function Admin() {
   return (
     <main className="min-h-full p-8 text-text max-w-3xl mx-auto">
       <header className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl text-gold">La Pecera</h1>
+        <h1 className="text-3xl text-sky-500">La Pecera</h1>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-muted">Usuario: <b>{user}</b></span>
           <button onClick={() => logout().then(() => navigate('/login'))} className="underline cursor-pointer">
@@ -36,8 +36,8 @@ export default function Admin() {
         <>
           <p className="text-muted mb-4">Visitas de hoy ({stats.date})</p>
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="rounded border border-muted/30 p-4"><div className="text-4xl text-gold">{stats.total}</div>Totales</div>
-            <div className="rounded border border-muted/30 p-4"><div className="text-4xl text-gold">{stats.unique}</div>Únicas</div>
+            <div className="rounded border border-muted/30 p-4"><div className="text-4xl text-sky-500">{stats.total}</div>Totales</div>
+            <div className="rounded border border-muted/30 p-4"><div className="text-4xl text-sky-500">{stats.unique}</div>Únicas</div>
           </div>
           <table className="w-full text-left">
             <thead className="text-muted"><tr><th>Página</th><th>Totales</th><th>Únicas</th></tr></thead>
